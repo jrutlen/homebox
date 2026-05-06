@@ -150,12 +150,7 @@
         else acc.attachments.push(attachment);
         return acc;
       },
-      {
-        attachments: [] as ItemAttachment[],
-        warranty: [] as ItemAttachment[],
-        manuals: [] as ItemAttachment[],
-        receipts: [] as ItemAttachment[],
-      }
+      { attachments: [] as ItemAttachment[], warranty: [] as ItemAttachment[], manuals: [] as ItemAttachment[], receipts: [] as ItemAttachment[] }
     );
   });
 
@@ -176,12 +171,12 @@
         type: "markdown",
         text: location.value.notes,
       },
-      ...(location.value.fields || []).map(field => {
+      ...((location.value.fields || []).map(field => {
         return {
           name: field.name,
           text: field.textValue,
         } as AnyDetail;
-      }),
+      })),
     ];
 
     if (!preferences.value.showEmpty) {
@@ -229,7 +224,7 @@
           <button
             v-for="(photo, i) in photos"
             :key="i"
-            class="aspect-square group relative overflow-hidden rounded-lg border bg-muted"
+            class="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
             @click="openImageDialog(photo, location.id)"
           >
             <img
