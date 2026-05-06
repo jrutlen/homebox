@@ -104,6 +104,17 @@
     passwordChange.current = "";
     passwordChange.loading = false;
   }
+
+  const isWebhookUrlValid = computed<boolean>(() => {
+    const url = preferences.value.homeAssistantWebhookUrl;
+    if (!url) return true; // empty is acceptable (feature disabled)
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  });
 </script>
 
 <template>
@@ -243,7 +254,11 @@
             v-model="preferences.homeAssistantWebhookUrl"
             type="url"
             placeholder="https://your-ha-instance.local/api/webhook/locate-item"
+            :class="{ 'border-destructive': !isWebhookUrlValid }"
           />
+          <p v-if="!isWebhookUrlValid" class="text-sm text-destructive">
+            {{ $t("profile.home_assistant_webhook_url_invalid") }}
+          </p>
         </div>
       </BaseCard>
 

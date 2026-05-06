@@ -781,7 +781,8 @@
     "home_assistant_webhook_url": "Home Assistant Webhook URL",
     "home_assistant_webhook_url_sub": "URL used to trigger the Locate button on item detail pages. Supports storage grid location codes (e.g. A1, B12).",
     "home_assistant_settings": "Home Assistant Integration",
-    "home_assistant_settings_sub": "Configure the webhook used to physically locate items via an ESP32/ESP8266 grid indicator."
+    "home_assistant_settings_sub": "Configure the webhook used to physically locate items via an ESP32/ESP8266 grid indicator.",
+    "home_assistant_webhook_url_invalid": "Please enter a valid HTTP or HTTPS URL"
   },
   "reports": {
     "label_generator": {

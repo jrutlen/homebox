@@ -652,7 +652,8 @@
         body: { location: locationName },
       });
       toast.success(t("items.toast.locate_triggered"));
-    } catch {
+    } catch (err) {
+      console.error("[Locate] Failed to trigger Home Assistant webhook:", err);
       toast.error(t("items.toast.locate_failed"));
     }
   }
@@ -747,7 +748,7 @@
                 class="w-9 md:w-auto"
                 variant="secondary"
                 :aria-label="$t('items.locate')"
-                @click="triggerLocate(item.location!.name)"
+                @click="item.location?.name && triggerLocate(item.location.name)"
               >
                 <MdiMapMarker />
                 <span class="hidden md:inline">{{ $t("items.locate") }}</span>
