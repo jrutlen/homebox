@@ -213,26 +213,32 @@ globals:
     initial_value: "0"
 
   # ── Runtime copies of grid dimensions ────────────────────────────────────────
-  # Keep these in sync with the substitutions at the top of the file.
+  # These globals mirror the substitutions so that lambdas can read them at
+  # runtime.  The initial_value uses substitution syntax so changing the
+  # substitutions at the top of this file is the only edit required.
   - id: leds_per_row_val
     type: int
     restore_value: no
-    initial_value: "54"   # leds_per_row substitution
+    initial_value: "${leds_per_row}"
 
   - id: num_rows_val
     type: int
     restore_value: no
-    initial_value: "15"   # row_count substitution
+    initial_value: "${row_count}"
 
   - id: num_cols_val
     type: int
     restore_value: no
-    initial_value: "18"   # col_count substitution
+    initial_value: "${col_count}"
 
   # ── Per-column LED layout ─────────────────────────────────────────────────────
   #
   # col_start[n]  First LED position of column n within a single row.
   # col_width[n]  Number of LEDs that represent column n.
+  #
+  # NOTE: The array size (18) is hardcoded in the type declaration because
+  # ESPHome does not support substitutions inside type strings.  If you change
+  # col_count, update both the array sizes here AND every value in the arrays.
   #
   # Default (18 columns, 3 LEDs each, no gaps):
   #   Col A  → positions  0– 2  (col_start=0,  col_width=3)
@@ -247,7 +253,6 @@ globals:
   #
   # Example with mixed-width columns:
   #   col_start = {0, 2, 6, 10, …}  col_width = {2, 4, 4, 3, …}
-  #
   - id: col_start
     type: int[18]
     restore_value: no
