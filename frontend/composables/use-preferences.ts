@@ -32,6 +32,7 @@ export type LocationViewPreferences = {
   quickActions: {
     enabled: boolean;
   };
+  homeAssistantWebhookUrl: string;
 };
 export type PreferenceSyncConfig = Partial<Record<keyof LocationViewPreferences, boolean>>;
 
@@ -56,6 +57,7 @@ const DEFAULT_PREFERENCES: LocationViewPreferences = {
   quickActions: {
     enabled: true,
   },
+  homeAssistantWebhookUrl: "",
 };
 let syncConfig: PreferenceSyncConfig = {
   itemDisplayView: false,

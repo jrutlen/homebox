@@ -8,6 +8,7 @@
   import MdiPlus from "~icons/mdi/plus";
   import MdiMinus from "~icons/mdi/minus";
   import MdiDelete from "~icons/mdi/delete";
+  import MdiMapMarker from "~icons/mdi/map-marker";
   import MdiPlusBoxMultipleOutline from "~icons/mdi/plus-box-multiple-outline";
   import MdiContentSaveEdit from "~icons/mdi/content-save-edit";
   import MdiDotsVertical from "~icons/mdi/dots-vertical";
@@ -628,6 +629,33 @@
 
     openDialog(DialogID.CreateItem);
   }
+
+  // Matches location names of the form: one letter followed by 1-2 digits (e.g. A1, B12, Z9)
+  const GRID_LOCATION_RE = /^[A-Za-z]\d{1,2}$/;
+
+  const isLocatableLocation = computed<boolean>(() => {
+    const name = item.value?.location?.name;
+    return typeof name === "string" && GRID_LOCATION_RE.test(name);
+  });
+
+  async function triggerLocate(locationName: string) {
+    const webhookUrl = preferences.value.homeAssistantWebhookUrl;
+    if (!webhookUrl) {
+      toast.error(t("items.toast.locate_no_webhook"));
+      return;
+    }
+
+    try {
+      await $fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { location: locationName },
+      });
+      toast.success(t("items.toast.locate_triggered"));
+    } catch {
+      toast.error(t("items.toast.locate_failed"));
+    }
+  }
 </script>
 
 <template>
@@ -712,6 +740,17 @@
               <Button class="w-9 md:w-auto" :aria-label="$t('global.create_subitem')" @click="createSubitem">
                 <MdiPlus />
                 <span class="hidden md:inline">{{ $t("global.create_subitem") }}</span>
+              </Button>
+
+              <Button
+                v-if="isLocatableLocation"
+                class="w-9 md:w-auto"
+                variant="secondary"
+                :aria-label="$t('items.locate')"
+                @click="triggerLocate(item.location!.name)"
+              >
+                <MdiMapMarker />
+                <span class="hidden md:inline">{{ $t("items.locate") }}</span>
               </Button>
 
               <!-- More actions dropdown -->
