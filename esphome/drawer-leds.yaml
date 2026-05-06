@@ -1,0 +1,400 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  ESPHome – Drawer LED Locator                                              ║
+# ║                                                                            ║
+# ║  Controls a single WS2812 LED strip that serpentines through every row     ║
+# ║  of a drawer cabinet, enabling Home Assistant to visually locate any bin.  ║
+# ║                                                                            ║
+# ║  Grid layout                                                               ║
+# ║    Rows    : 1 – row_count    (numbered, default 15)                       ║
+# ║    Columns : A – R            (lettered, default 18)                       ║
+# ║                                                                            ║
+# ║  Bin codes : <column-letter><row-number>, e.g. "A1", "C5", "R15"          ║
+# ║                                                                            ║
+# ║  Serpentine wiring                                                         ║
+# ║    Even rows (0, 2, 4 …) : left → right                                   ║
+# ║    Odd  rows (1, 3, 5 …) : right → left                                   ║
+# ║                                                                            ║
+# ║  Column LED widths are configured in the globals section below.            ║
+# ║  Each column can have a different number of LEDs, and gaps (unlit LEDs)    ║
+# ║  between columns are supported simply by leaving space in col_start.       ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ── Quick-change substitutions ────────────────────────────────────────────────
+substitutions:
+  device_name: drawer-leds
+  friendly_name: "Drawer LEDs"
+
+  # GPIO pin connected to the LED strip DATA line
+  led_data_pin: GPIO16
+
+  # Grid dimensions – keep in sync with the runtime globals below
+  row_count: "15"   # Rows labelled 1 … row_count
+  col_count: "18"   # Columns labelled A … (A + col_count - 1)  →  A–R for 18
+
+  # Total number of LEDs per physical row of the strip.
+  # Must equal:  sum(col_width[0..col_count-1])  +  any gap LEDs between columns.
+  # Default (18 cols × 3 LEDs, no gaps): 54
+  leds_per_row: "54"
+
+  # Total LED count in the strip = row_count × leds_per_row
+  total_leds: "810"   # 15 × 54
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret ap_fallback_password
+
+captive_portal:
+
+# ── LED Strip ─────────────────────────────────────────────────────────────────
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812
+    pin: ${led_data_pin}
+    num_leds: ${total_leds}
+    id: drawer_leds
+    name: "${friendly_name} Strip"
+    restore_mode: ALWAYS_OFF
+    default_transition_length: 0ms
+    effects:
+      # ── Drawer Locate effect ───────────────────────────────────────────────
+      # A single addressable-lambda effect handles all three display modes.
+      # It reads the current mode from the Home Assistant select entity and
+      # re-renders every 300 ms.  The Concentric mode advances its animation
+      # step on each render; Normal and Crosshair are effectively static.
+      - addressable_lambda:
+          name: "Drawer Locate"
+          update_interval: 300ms
+          lambda: |-
+            // ── Read shared state ─────────────────────────────────────────
+            int sel_row = id(selected_row);
+            int sel_col = id(selected_col);
+            int n_rows  = id(num_rows_val);
+            int n_cols  = id(num_cols_val);
+            int row_len = id(leds_per_row_val);
+
+            // Clear every LED first
+            for (int i = 0; i < (int)it.size(); i++) it[i] = Color(0, 0, 0);
+
+            if (sel_row < 0 || sel_col < 0) return;
+
+            // ── Serpentine addressing ──────────────────────────────────────
+            // Returns the physical strip index for (row, position-within-row).
+            // Even rows go left→right; odd rows go right→left.
+            auto led_of = [&](int row, int pos) -> int {
+              if (row % 2 == 0)
+                return row * row_len + pos;
+              else
+                return row * row_len + (row_len - 1 - pos);
+            };
+
+            // ── Paint one drawer cell ──────────────────────────────────────
+            // Lights the LEDs belonging to (row, col) with the given colour.
+            // Reads col_start[] and col_width[] globals for the correct range.
+            auto paint = [&](int row, int col, Color colour) {
+              if (row < 0 || row >= n_rows || col < 0 || col >= n_cols) return;
+              int cs = id(col_start)[col];
+              int cw = id(col_width)[col];
+              for (int p = 0; p < cw; p++) {
+                int idx = led_of(row, cs + p);
+                if (idx >= 0 && idx < (int)it.size())
+                  it[idx] = colour;
+              }
+            };
+
+            // ── Mode dispatch ─────────────────────────────────────────────
+            std::string mode = id(light_mode).state;
+
+            if (mode == "Normal") {
+              // ── Normal ──────────────────────────────────────────────────
+              // Only the selected drawer, white.
+              paint(sel_row, sel_col, Color(255, 255, 255));
+
+            } else if (mode == "Crosshair") {
+              // ── Crosshair ────────────────────────────────────────────────
+              // All drawers in the selected row and column glow white;
+              // the selected drawer itself glows red.
+              for (int c = 0; c < n_cols; c++)
+                paint(sel_row, c, Color(180, 180, 180));
+              for (int r = 0; r < n_rows; r++)
+                paint(r, sel_col, Color(180, 180, 180));
+              paint(sel_row, sel_col, Color(255, 0, 0));
+
+            } else if (mode == "Concentric") {
+              // ── Concentric ───────────────────────────────────────────────
+              // Chebyshev-distance rings pulse inward, starting with the full
+              // grid lit and shrinking down to only the selected drawer, then
+              // looping.  The selected drawer is always highlighted red.
+
+              int &step = id(concentric_step);
+
+              // Furthest ring distance from the selected cell to any corner
+              int max_d = 0;
+              int corners[4][2] = {
+                {0, 0}, {0, n_cols - 1}, {n_rows - 1, 0}, {n_rows - 1, n_cols - 1}
+              };
+              for (auto &corner : corners) {
+                int d = std::max(abs(corner[0] - sel_row),
+                                 abs(corner[1] - sel_col));
+                if (d > max_d) max_d = d;
+              }
+
+              // Light every drawer whose Chebyshev distance ≥ current step
+              for (int r = 0; r < n_rows; r++) {
+                for (int c = 0; c < n_cols; c++) {
+                  int d = std::max(abs(r - sel_row), abs(c - sel_col));
+                  if (d >= step && d > 0)
+                    paint(r, c, Color(180, 180, 180));
+                }
+              }
+
+              // Selected drawer is always red regardless of step
+              paint(sel_row, sel_col, Color(255, 0, 0));
+
+              // Advance animation step; reset after all rings have collapsed
+              step++;
+              if (step > max_d + 1) step = 0;
+            }
+
+# ── Globals ───────────────────────────────────────────────────────────────────
+globals:
+  # ── Selected drawer ─────────────────────────────────────────────────────────
+  # -1 means "nothing selected / LEDs off"
+  - id: selected_row
+    type: int
+    restore_value: no
+    initial_value: "-1"
+
+  - id: selected_col
+    type: int
+    restore_value: no
+    initial_value: "-1"
+
+  # ── Concentric animation ─────────────────────────────────────────────────────
+  - id: concentric_step
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  # ── Locate state ──────────────────────────────────────────────────────────────
+  - id: locate_active
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: last_locate_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+  # ── Runtime copies of grid dimensions ────────────────────────────────────────
+  # Keep these in sync with the substitutions at the top of the file.
+  - id: leds_per_row_val
+    type: int
+    restore_value: no
+    initial_value: "54"   # leds_per_row substitution
+
+  - id: num_rows_val
+    type: int
+    restore_value: no
+    initial_value: "15"   # row_count substitution
+
+  - id: num_cols_val
+    type: int
+    restore_value: no
+    initial_value: "18"   # col_count substitution
+
+  # ── Per-column LED layout ─────────────────────────────────────────────────────
+  #
+  # col_start[n]  First LED position of column n within a single row.
+  # col_width[n]  Number of LEDs that represent column n.
+  #
+  # Default (18 columns, 3 LEDs each, no gaps):
+  #   Col A  → positions  0– 2  (col_start=0,  col_width=3)
+  #   Col B  → positions  3– 5  (col_start=3,  col_width=3)
+  #   …
+  #   Col R  → positions 51–53  (col_start=51, col_width=3)
+  #
+  # Example with 1-LED gaps between columns:
+  #   col_start = {0, 4, 8, 12, …}  col_width = {3, 3, 3, 3, …}
+  #   leds_per_row substitution = 71  (18×3 LEDs + 17 gaps)
+  #   total_leds  substitution  = 1065  (71 × 15)
+  #
+  # Example with mixed-width columns:
+  #   col_start = {0, 2, 6, 10, …}  col_width = {2, 4, 4, 3, …}
+  #
+  - id: col_start
+    type: int[18]
+    restore_value: no
+    initial_value: >-
+      {0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51}
+
+  - id: col_width
+    type: int[18]
+    restore_value: no
+    initial_value: >-
+      {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+
+# ── Home Assistant Controls ───────────────────────────────────────────────────
+
+# ─ Mode select ────────────────────────────────────────────────────────────────
+# Normal     : Only the selected drawer lit (white).
+# Crosshair  : Full row and column lit (white), selected drawer red.
+# Concentric : Animated rings that pulse inward toward the selected drawer.
+select:
+  - platform: template
+    name: "${friendly_name} Mode"
+    id: light_mode
+    icon: mdi:lightbulb-auto
+    optimistic: true
+    options:
+      - Normal
+      - Crosshair
+      - Concentric
+    initial_option: Normal
+    restore_value: true
+    on_value:
+      then:
+        # Re-trigger the effect so the new mode is rendered immediately
+        - if:
+            condition:
+              lambda: "return id(locate_active);"
+            then:
+              - light.turn_on:
+                  id: drawer_leds
+                  effect: "Drawer Locate"
+
+# ─ Timeout ────────────────────────────────────────────────────────────────────
+# Number of minutes before the LEDs automatically turn off after a locate.
+number:
+  - platform: template
+    name: "${friendly_name} Timeout"
+    id: locate_timeout_min
+    icon: mdi:timer-outline
+    unit_of_measurement: min
+    min_value: 1
+    max_value: 60
+    step: 1
+    initial_value: 5
+    optimistic: true
+    restore_value: true
+    mode: box
+
+# ─ Turn-off button ────────────────────────────────────────────────────────────
+button:
+  - platform: template
+    name: "${friendly_name} Turn Off"
+    id: turn_off_btn
+    icon: mdi:led-off
+    on_press:
+      - lambda: |-
+          id(selected_row)    = -1;
+          id(selected_col)    = -1;
+          id(locate_active)   = false;
+          id(concentric_step) = 0;
+      - light.turn_off:
+          id: drawer_leds
+
+# ─ Bin locate text input ──────────────────────────────────────────────────────
+# Type a bin code (e.g. "A5", "c12", "R15") to locate a drawer.
+# Format: <column-letter><row-number>
+#   Column letter : A–R  (case-insensitive)
+#   Row number    : 1–15
+#
+# Entering a valid code turns on the LEDs in the configured mode and starts
+# the auto-off timer.  The Turn Off button cancels immediately.
+text:
+  - platform: template
+    name: "${friendly_name} Locate Bin"
+    id: locate_bin
+    icon: mdi:map-search-outline
+    mode: text
+    optimistic: true
+    min_length: 2
+    max_length: 4
+    on_value:
+      then:
+        - lambda: |-
+            std::string val = x;
+            if (val.empty()) return;
+
+            // Normalise to upper-case
+            for (char &c : val) c = toupper((unsigned char)c);
+
+            // First character must be a column letter A–R
+            if (val.size() < 2) return;
+            char col_char = val[0];
+            int  max_col_char = 'A' + id(num_cols_val) - 1;
+            if (col_char < 'A' || col_char > max_col_char) {
+              ESP_LOGW("drawer", "Invalid column '%c' in bin code '%s'",
+                       col_char, val.c_str());
+              return;
+            }
+            int col = col_char - 'A';   // 0-indexed
+
+            // Remaining characters must form a valid row number 1…row_count
+            int row = atoi(val.c_str() + 1) - 1;   // convert to 0-indexed
+            if (row < 0 || row >= id(num_rows_val)) {
+              ESP_LOGW("drawer", "Invalid row %d in bin code '%s'",
+                       row + 1, val.c_str());
+              return;
+            }
+
+            // Store selection, reset animation step, record timestamp
+            id(selected_row)    = row;
+            id(selected_col)    = col;
+            id(concentric_step) = 0;
+            id(locate_active)   = true;
+            id(last_locate_ms)  = millis();
+
+            ESP_LOGI("drawer", "Locating bin %s → row=%d col=%d",
+                     val.c_str(), row + 1, col);
+        # Ensure the effect is running (also works if already active)
+        - light.turn_on:
+            id: drawer_leds
+            effect: "Drawer Locate"
+
+# ── Auto-off watchdog ─────────────────────────────────────────────────────────
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          if (!id(locate_active)) return;
+
+          uint32_t timeout_ms =
+            static_cast<uint32_t>(id(locate_timeout_min).state * 60000.0f);
+
+          if (millis() - id(last_locate_ms) >= timeout_ms) {
+            ESP_LOGI("drawer", "Locate timeout — turning off LEDs");
+            id(selected_row)    = -1;
+            id(selected_col)    = -1;
+            id(locate_active)   = false;
+            id(concentric_step) = 0;
+            auto call = id(drawer_leds).turn_off();
+            call.perform();
+          }
