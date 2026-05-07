@@ -7,6 +7,7 @@
   import MdiLoading from "~icons/mdi/loading";
   import MdiPrinterPos from "~icons/mdi/printer-pos";
   import MdiFileDownload from "~icons/mdi/file-download";
+  import MdiStickerText from "~icons/mdi/sticker-text";
 
   import {
     Dialog,
@@ -26,9 +27,11 @@
   const props = defineProps<{
     type: string;
     id: string;
+    entityData?: Record<string, unknown> | null;
   }>();
 
   const pubApi = usePublicApi();
+  const preferences = useViewPreferences();
 
   const { data: status } = useAsyncData(async () => {
     const { data, error } = await pubApi.status();
@@ -95,6 +98,26 @@
       throw new Error(`Unexpected labelmaker type ${props.type}`);
     }
   }
+
+  async function triggerPrintLabelWebhook() {
+    const webhookUrl = preferences.value.printLabelWebhookUrl;
+    if (!webhookUrl) {
+      toast.error(t("components.global.label_maker.toast.print_label_no_webhook"));
+      return;
+    }
+
+    try {
+      await $fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: props.entityData ?? { id: props.id, type: props.type },
+      });
+      toast.success(t("components.global.label_maker.toast.print_label_triggered"));
+    } catch (err) {
+      console.error("[PrintLabel] Failed to trigger print label webhook:", err);
+      toast.error(t("components.global.label_maker.toast.print_label_failed"));
+    }
+  }
 </script>
 
 <template>
@@ -149,6 +172,17 @@
           </TooltipTrigger>
           <TooltipContent>
             {{ $t("components.global.label_maker.browser_print") }}
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button size="icon" @click="triggerPrintLabelWebhook">
+              <MdiStickerText name="mdi-sticker-text" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {{ $t("components.global.label_maker.print_label_webhook") }}
           </TooltipContent>
         </Tooltip>
 

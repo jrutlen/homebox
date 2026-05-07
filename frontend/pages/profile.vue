@@ -115,6 +115,17 @@
       return false;
     }
   });
+
+  const isPrintLabelWebhookUrlValid = computed<boolean>(() => {
+    const url = preferences.value.printLabelWebhookUrl;
+    if (!url) return true; // empty is acceptable (feature disabled)
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  });
 </script>
 
 <template>
@@ -258,6 +269,20 @@
           />
           <p v-if="!isWebhookUrlValid" class="text-sm text-destructive">
             {{ $t("profile.home_assistant_webhook_url_invalid") }}
+          </p>
+
+          <label class="block text-sm font-medium">
+            {{ $t("profile.print_label_webhook_url") }}
+          </label>
+          <p class="text-sm text-muted-foreground">{{ $t("profile.print_label_webhook_url_sub") }}</p>
+          <Input
+            v-model="preferences.printLabelWebhookUrl"
+            type="url"
+            placeholder="https://your-ha-instance.local/api/webhook/print-label"
+            :class="{ 'border-destructive': !isPrintLabelWebhookUrlValid }"
+          />
+          <p v-if="!isPrintLabelWebhookUrlValid" class="text-sm text-destructive">
+            {{ $t("profile.print_label_webhook_url_invalid") }}
           </p>
         </div>
       </BaseCard>
