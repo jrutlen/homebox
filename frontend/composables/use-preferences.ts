@@ -32,6 +32,8 @@ export type LocationViewPreferences = {
   quickActions: {
     enabled: boolean;
   };
+  /** Home Assistant webhook URL for triggering physical location indicators (e.g. https://ha-instance.local/api/webhook/locate-item). */
+  homeAssistantWebhookUrl: string;
 };
 export type PreferenceSyncConfig = Partial<Record<keyof LocationViewPreferences, boolean>>;
 
@@ -56,6 +58,7 @@ const DEFAULT_PREFERENCES: LocationViewPreferences = {
   quickActions: {
     enabled: true,
   },
+  homeAssistantWebhookUrl: "",
 };
 let syncConfig: PreferenceSyncConfig = {
   itemDisplayView: false,

@@ -6,7 +6,9 @@
   import MdiAccount from "~icons/mdi/account";
   import MdiDelete from "~icons/mdi/delete";
   import MdiFill from "~icons/mdi/fill";
+  import MdiHomeAutomation from "~icons/mdi/home-automation";
   import { Button } from "@/components/ui/button";
+  import { Input } from "@/components/ui/input";
   import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
   import { useDialog } from "@/components/ui/dialog-provider";
   import LanguageSelector from "~/components/App/LanguageSelector.vue";
@@ -102,6 +104,17 @@
     passwordChange.current = "";
     passwordChange.loading = false;
   }
+
+  const isWebhookUrlValid = computed<boolean>(() => {
+    const url = preferences.value.homeAssistantWebhookUrl;
+    if (!url) return true; // empty is acceptable (feature disabled)
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  });
 </script>
 
 <template>
@@ -218,6 +231,34 @@
             </Button>
           </div>
           <ThemePicker />
+        </div>
+      </BaseCard>
+
+      <BaseCard>
+        <template #title>
+          <BaseSectionHeader>
+            <MdiHomeAutomation class="-mt-1 mr-2" />
+            <span> {{ $t("profile.home_assistant_settings") }} </span>
+            <template #description>
+              {{ $t("profile.home_assistant_settings_sub") }}
+            </template>
+          </BaseSectionHeader>
+        </template>
+
+        <div class="space-y-3 px-4 pb-4">
+          <label class="block text-sm font-medium">
+            {{ $t("profile.home_assistant_webhook_url") }}
+          </label>
+          <p class="text-sm text-muted-foreground">{{ $t("profile.home_assistant_webhook_url_sub") }}</p>
+          <Input
+            v-model="preferences.homeAssistantWebhookUrl"
+            type="url"
+            placeholder="https://your-ha-instance.local/api/webhook/locate-item"
+            :class="{ 'border-destructive': !isWebhookUrlValid }"
+          />
+          <p v-if="!isWebhookUrlValid" class="text-sm text-destructive">
+            {{ $t("profile.home_assistant_webhook_url_invalid") }}
+          </p>
         </div>
       </BaseCard>
 
