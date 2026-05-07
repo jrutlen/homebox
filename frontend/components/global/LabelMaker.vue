@@ -18,6 +18,7 @@
     DialogTitle,
   } from "@/components/ui/dialog";
   import { useDialog } from "@/components/ui/dialog-provider";
+  import type { EntityOut } from "~/lib/api/types/data-contracts";
   import { Button, ButtonGroup } from "@/components/ui/button";
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -27,7 +28,7 @@
   const props = defineProps<{
     type: string;
     id: string;
-    entityData?: Record<string, unknown> | null;
+    entityData?: EntityOut;
   }>();
 
   const pubApi = usePublicApi();

@@ -284,7 +284,7 @@
               <LabelMaker
                 :id="location.id"
                 type="location"
-                :entity-data="location as unknown as Record<string, unknown>"
+                :entity-data="location"
               />
               <Button class="w-9 md:w-auto" @click="openCreateItem">
                 <MdiPlus name="mdi-plus" />
