@@ -634,7 +634,7 @@
   const GRID_LOCATION_RE = /^[A-Za-z]\d{1,2}$/;
 
   const isLocatableLocation = computed<boolean>(() => {
-    const name = item.value?.location?.name;
+    const name = item.value?.parent?.name;
     return typeof name === "string" && GRID_LOCATION_RE.test(name);
   });
 
@@ -748,7 +748,7 @@
                 class="w-9 md:w-auto"
                 variant="secondary"
                 :aria-label="$t('items.locate')"
-                @click="item.location?.name && triggerLocate(item.location.name)"
+                @click="item.parent?.name && triggerLocate(item.parent.name)"
               >
                 <MdiMapMarker />
                 <span class="hidden md:inline">{{ $t("items.locate") }}</span>
