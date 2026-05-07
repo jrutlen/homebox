@@ -34,6 +34,8 @@ export type LocationViewPreferences = {
   };
   /** Home Assistant webhook URL for triggering physical location indicators (e.g. https://ha-instance.local/api/webhook/locate-item). */
   homeAssistantWebhookUrl: string;
+  /** Home Assistant webhook URL for triggering label printing (e.g. https://ha-instance.local/api/webhook/print-label). */
+  printLabelWebhookUrl: string;
 };
 export type PreferenceSyncConfig = Partial<Record<keyof LocationViewPreferences, boolean>>;
 
@@ -59,6 +61,7 @@ const DEFAULT_PREFERENCES: LocationViewPreferences = {
     enabled: true,
   },
   homeAssistantWebhookUrl: "",
+  printLabelWebhookUrl: "",
 };
 let syncConfig: PreferenceSyncConfig = {
   itemDisplayView: false,

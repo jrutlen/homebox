@@ -150,7 +150,12 @@
         else acc.attachments.push(attachment);
         return acc;
       },
-      { attachments: [] as ItemAttachment[], warranty: [] as ItemAttachment[], manuals: [] as ItemAttachment[], receipts: [] as ItemAttachment[] }
+      {
+        attachments: [] as ItemAttachment[],
+        warranty: [] as ItemAttachment[],
+        manuals: [] as ItemAttachment[],
+        receipts: [] as ItemAttachment[],
+      }
     );
   });
 
@@ -171,12 +176,12 @@
         type: "markdown",
         text: location.value.notes,
       },
-      ...((location.value.fields || []).map(field => {
+      ...(location.value.fields || []).map(field => {
         return {
           name: field.name,
           text: field.textValue,
         } as AnyDetail;
-      })),
+      }),
     ];
 
     if (!preferences.value.showEmpty) {
@@ -224,7 +229,7 @@
           <button
             v-for="(photo, i) in photos"
             :key="i"
-            class="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+            class="aspect-square group relative overflow-hidden rounded-lg border bg-muted"
             @click="openImageDialog(photo, location.id)"
           >
             <img
@@ -276,7 +281,11 @@
               </div>
             </div>
             <div class="ml-auto mt-2 flex flex-wrap items-center justify-between gap-2">
-              <LabelMaker :id="location.id" type="location" />
+              <LabelMaker
+                :id="location.id"
+                type="location"
+                :entity-data="location"
+              />
               <Button class="w-9 md:w-auto" @click="openCreateItem">
                 <MdiPlus name="mdi-plus" />
                 <span class="hidden md:inline">

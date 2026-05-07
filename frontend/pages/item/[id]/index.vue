@@ -737,8 +737,9 @@
                 v-if="typeof item.assetId === 'string' && item.assetId != ''"
                 :id="item.assetId"
                 type="asset"
+                :entity-data="item"
               />
-              <LabelMaker v-else :id="item.id" type="item" />
+              <LabelMaker v-else :id="item.id" type="item" :entity-data="item" />
               <Button class="w-9 md:w-auto" :aria-label="$t('global.create_subitem')" @click="createSubitem">
                 <MdiPlus />
                 <span class="hidden md:inline">{{ $t("global.create_subitem") }}</span>
