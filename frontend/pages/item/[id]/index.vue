@@ -633,6 +633,7 @@
   // Matches location names of the form: one letter followed by 1-2 digits (e.g. A1, B12, Z9)
   const GRID_LOCATION_RE = /^[A-Za-z]\d{1,2}$/;
 
+  // In Homebox, an item's location is its parent entity (EntityOut has no dedicated location field).
   const isLocatableLocation = computed<boolean>(() => {
     const name = item.value?.parent?.name;
     return typeof name === "string" && GRID_LOCATION_RE.test(name);
