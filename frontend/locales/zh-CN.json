@@ -35,6 +35,7 @@
         "no_invites": "没有邀请",
         "remaining_uses": "剩余可用次数",
         "tabs": {
+            "entity_types": "实体类型",
             "invites": "邀请",
             "members": "成员",
             "notifiers": "通知器",
@@ -116,7 +117,88 @@
             "no_color_selected": "尚未选择任何颜色",
             "randomize": "随机颜色"
         },
+        "entity": {
+            "create_modal": {
+                "clear_template": "清空模板",
+                "delete_photo": "删除照片",
+                "entity_description": "{type}描述",
+                "entity_name": "{type}名称",
+                "entity_photo": "{type}照片📷",
+                "entity_quantity": "{type}数量",
+                "item_selector_no_results_text": "输入以搜索…",
+                "parent_item": "父物品",
+                "product_tooltip_input_barcode": "使用手动提供的条形码自动填充",
+                "product_tooltip_scan_barcode": "使用📷扫描条形码自动填充",
+                "rotate_photo": "旋转照片",
+                "set_as_primary_photo": "{isPrimary, select, true {取消设为封面} false {设为封面} other {设为封面}}",
+                "toast": {
+                    "already_creating": "已在创建{type}",
+                    "create_failed": "无法创建{type}",
+                    "create_success": "{type}已创建",
+                    "failed_load_parent": "加载父物品失败——请手动选择",
+                    "no_canvas_support": "您的浏览器不支持Canvas操作",
+                    "please_select_entity_type": "请选择实体类型。",
+                    "please_select_location": "请选择位置。",
+                    "rotate_failed": "旋转图片失败：{ error }",
+                    "rotate_process_failed": "处理已旋转的图片失败",
+                    "some_photos_failed": "{count, plural, =0 {没有要上传的照片。} =1 {照片上传失败。} other {照片上传失败。}}",
+                    "upload_failed": "照片上传失败：{ photoName }",
+                    "upload_success": "{count, plural, =0 {未上传照片。} =1 {照片上传成功。} other {照片上传成功。}}",
+                    "uploading_photos": "{count, plural, =0 {没有要上传的照片} =1 {正上传 1 张照片…} other {正上传 {count} 张照片…}}"
+                },
+                "upload_photos": "上传照片",
+                "uploaded": "上传的照片"
+            },
+            "selector": {
+                "placeholder": "选择类型…"
+            }
+        },
+        "entityTypes": {
+            "card": {
+                "actions": {
+                    "delete": "删除"
+                },
+                "badge_container": "容器",
+                "default_template": "默认模板：{name}",
+                "tooltip": {
+                    "delete": "删除",
+                    "edit": "修改"
+                }
+            },
+            "confirm": {
+                "convert_item_to_location": "将物品类型转换为位置类型后，正在使用该类型的实体将丢失部分字段数据。确定要继续吗？",
+                "delete_entity_type": "确定要删除“{name}”吗？"
+            },
+            "create_dialog": {
+                "button": "创建",
+                "is_container_location_type_label": "属于容器/位置类型",
+                "name_label": "名称",
+                "title": "创建实体类型"
+            },
+            "page": {
+                "create": "创建",
+                "empty_button": "创建实体类型",
+                "empty_title": "尚未定义任何实体类型。",
+                "title": "实体类型"
+            },
+            "toasts": {
+                "create_failed": "创建实体类型失败",
+                "create_success": "实体类型已创建",
+                "delete_confirm_failed": "删除实体类型失败，请确保没有实体正在使用该类型。",
+                "delete_success": "实体类型已删除",
+                "name_required": "名称是必填项",
+                "update_failed": "更新实体类型失败",
+                "update_success": "实体类型已更新"
+            },
+            "update_dialog": {
+                "button": "更新",
+                "is_container_location_type_label": "属于容器/位置类型",
+                "name_label": "名称",
+                "title": "更新实体类型"
+            }
+        },
         "form": {
+            "min_length": "最少 {min}",
             "password": {
                 "toggle_show": "切换密码显示"
             }
@@ -171,6 +253,7 @@
                 "qr_tooltip": "显示二维码"
             },
             "password_score": {
+                "does_not_meet_requirement": "密码强度不符合要求",
                 "password_strength": "密码强度"
             }
         },
@@ -178,36 +261,6 @@
             "attachments_list": {
                 "download": "下载",
                 "open_new_tab": "在新标签页中打开"
-            },
-            "create_modal": {
-                "clear_template": "清空模板",
-                "delete_photo": "删除照片",
-                "item_description": "物品描述",
-                "item_name": "物品名称",
-                "item_photo": "物品照片📷",
-                "item_quantity": "物品数量",
-                "parent_item": "父物品",
-                "product_tooltip_input_barcode": "使用手动提供的条形码自动填充",
-                "product_tooltip_scan_barcode": "使用相机扫描条形码自动填充",
-                "rotate_photo": "旋转照片",
-                "set_as_primary_photo": "设置为{isPrimary, select, true {非} false {} other {}}封面",
-                "title": "创建物品",
-                "toast": {
-                    "already_creating": "已在创建物品",
-                    "create_failed": "无法创建物品",
-                    "create_success": "物品创建成功",
-                    "failed_load_parent": "加载父项失败-请手动选择",
-                    "no_canvas_support": "您的浏览器不支持Canvas操作",
-                    "please_select_location": "请选择位置。",
-                    "rotate_failed": "旋转图片失败：{ error }",
-                    "rotate_process_failed": "处理已旋转图片失败",
-                    "some_photos_failed": "{count, plural, =0 {无照片上传.} =1 {一张照片上传失败.} other {多张照片上传失败.}}",
-                    "upload_failed": "上传照片失败：{ photoName }",
-                    "upload_success": "{count, plural, =0 {未上传照片} =1 {照片上传成功} other {所有照片上传成功}}",
-                    "uploading_photos": "{count, plural, =0 {没有照片要上传} =1 {正上传 1 张照片…} other {正上传 {count} 照片…}}"
-                },
-                "upload_photos": "上传照片",
-                "uploaded": "照片已上传"
             },
             "product_import": {
                 "barcode": "产品条形码",
@@ -278,16 +331,7 @@
             }
         },
         "location": {
-            "create_modal": {
-                "location_description": "位置描述",
-                "location_name": "位置名称",
-                "title": "创建位置",
-                "toast": {
-                    "already_creating": "已在创建位置",
-                    "create_failed": "无法创建位置",
-                    "create_success": "已创建位置"
-                }
-            },
+            "create_item": "创建物品",
             "selector": {
                 "clear": "清除位置选择",
                 "no_location_found": "未找到位置",
@@ -312,7 +356,9 @@
             "create_modal": {
                 "tag_color": "标签颜色",
                 "tag_description": "标签描述",
+                "tag_icon": "标签图标",
                 "tag_name": "标签名",
+                "tag_parent": "父标签",
                 "title": "创建标签",
                 "toast": {
                     "already_creating": "已在创建标签",
@@ -322,6 +368,8 @@
                 }
             },
             "selector": {
+                "clear": "清除",
+                "no_tags_found": "未找到标签",
                 "select_tags": "选择标签"
             }
         },
@@ -394,18 +442,21 @@
         "archived": "归档",
         "build": "编译：{build}",
         "cancel": "取消",
+        "close": "关闭",
         "confirm": "确认",
         "create": "创建",
         "create_and_add": "保存并继续创建",
         "create_subitem": "创建子物品",
         "created": "创建于",
-        "delete": "刪除",
+        "delete": "删除",
         "delete_confirm": "确定要删除此物品吗？ ",
         "demo_instance": "这是一个演示实例",
         "details": "详情",
         "duplicate": "复制",
         "edit": "修改",
         "email": "邮箱",
+        "entity": "实体",
+        "entity_type": "实体类型",
         "follow_dev": "关注开发者",
         "footer": {
             "api_link": "'<a href=\"https://homebox.software/en/api/\" target=\"_blank\">'API接口'</a>'",
@@ -413,9 +464,11 @@
         },
         "github": "Github项目",
         "insured": "已投保",
+        "item": "物品",
         "items": "物品",
         "join_discord": "加入Discord讨论",
         "loading": "加载中…",
+        "location": "位置",
         "locations": "位置",
         "maintenance": "维护",
         "name": "名称",
@@ -428,9 +481,13 @@
         "return_home": "回到主页",
         "save": "保存",
         "search": "搜索",
+        "select": "选择…",
+        "show_less": "收起",
+        "show_more": "展开",
         "sign_out": "登出",
         "submit": "提交",
         "tags": "标签",
+        "type": "类型",
         "unknown": "未知",
         "update": "更新",
         "updating": "更新中",
@@ -450,13 +507,25 @@
         "total_value": "价值总和"
     },
     "index": {
+        "back_to_login": "返回登录",
         "disabled_registration": "已禁用注册",
         "dont_join_group": "不想加入群组？",
+        "forgot_password": "忘记密码？",
+        "forgot_password_check_email": "如果如果该邮箱已关联账户，重置链接将发送至该邮箱。链接将在 1 小时后失效。",
+        "forgot_password_send": "发送重置密码链接",
+        "forgot_password_subtitle": "输入您的账户邮箱，我们将向您发送重置密码的链接。",
+        "forgot_password_title": "重置密码",
         "joining_group": "您正在加入现有群组！",
         "login": "登录",
         "or": "或",
         "register": "注册",
         "remember_me": "记住我",
+        "reset_password_invalid": "此重置链接无效或已过期，请重新获取。",
+        "reset_password_missing_token": "缺少重置令牌。请重新打开您电子邮件中的链接，或重新获取链接。",
+        "reset_password_set": "设置新密码",
+        "reset_password_subtitle": "为您的账户设置新密码。",
+        "reset_password_success": "您的密码已经重置，现在您可以使用新密码登录。",
+        "reset_password_title": "重置密码",
         "set_email": "您的电子邮箱是什么？",
         "set_name": "你的名称叫什么？",
         "set_password": "设置密码",
@@ -507,6 +576,7 @@
             "title": "复制设置"
         },
         "edit": {
+            "change_entity_type_confirm": "更改实体类型可能导致当前类型与新类型不共有的字段数据丢失。确定要更改实体类型吗？",
             "edit_attachment_dialog": {
                 "attachment_title": "附件标题",
                 "attachment_type": "附件类型",
@@ -575,11 +645,12 @@
         "toast": {
             "asset_not_found": "未找到资产",
             "attachment_deleted": "附件已删除",
+            "attachment_too_large": "附件过大：超出了服务器的上传大小限制",
             "attachment_updated": "附件已更新",
             "attachment_uploaded": "附件已上传",
             "child_items_location_no_longer_synced": "子物品的位置将不再与此物品同步。",
             "child_items_location_synced": "子物品的位置已与此物品同步",
-            "child_location_desync": "更改位置将使其与父位置脱离同步",
+            "child_location_desync": "父物品已清除——物品现在直接位于所选位置",
             "error_loading_parent_data": "尝试加载父级数据时出错",
             "failed_adjust_quantity": "调整数量失败",
             "failed_delete_attachment": "删除附件失败",
@@ -639,6 +710,8 @@
         "zh-TW": "中文（繁体）"
     },
     "languages.da-DK": "丹麦语",
+    "languages.el-GR": "希腊语",
+    "languages.en@pirate": "英语（海盗）",
     "languages.ro-RO": "罗马尼亚语",
     "languages.sk-SK": "斯洛伐克语",
     "languages.sr-RS": "塞尔维亚语（塞尔维亚）",
@@ -668,7 +741,7 @@
         "list": {
             "complete": "标记已完成",
             "create_first": "创建您的第一个项目",
-            "delete": "刪除",
+            "delete": "删除",
             "duplicate": "复制",
             "edit": "修改",
             "new": "创建"
@@ -715,6 +788,23 @@
     },
     "profile": {
         "active": "启用",
+        "api_key_copied": "已复制到剪贴板",
+        "api_key_copy": "复制",
+        "api_key_create": "创建 API 密钥",
+        "api_key_created": "创建时间",
+        "api_key_default_expiration": "未手动设置有效期的密钥将在30天后过期。",
+        "api_key_delete_confirm": "确定要撤销此 API 密钥吗？所有使用该密钥的客户端都将立即失去访问权限。",
+        "api_key_expires_at": "失效时间",
+        "api_key_last_used": "上次使用",
+        "api_key_name": "名称",
+        "api_key_name_placeholder": "如：Home Assistant",
+        "api_key_never_used": "从未使用",
+        "api_key_no_expiration": "永不失效",
+        "api_key_set_expiration": "自定义失效时间",
+        "api_key_token_label": "你的新 API 密钥",
+        "api_key_token_warning": "请立刻复制此令牌。为保障安全，此令牌不会再次显示。",
+        "api_keys": "API 密钥",
+        "api_keys_sub": "用于程序化访问的静态令牌，每个密钥都具有与您的帐户相同的权限。",
         "change_password": "更改密码",
         "currency_format": "货币格式",
         "current_password": "原密码",
@@ -730,6 +820,8 @@
         "inactive": "未启用",
         "language": "语言",
         "legacy_image_fit": "{currentValue, select, true {禁用旧版图像填充：用边框填充图像} false {启用旧版图像适配：裁剪以填充图像} other {未命中}}",
+        "logout_all_confirm": "你将从包括此设备的所有设备登出，并需要重新登录。是否继续？",
+        "logout_all_devices": "从所有设备登出",
         "moved_notice_body": "通知器、邀请和货币设置已移至集合页面。",
         "moved_notice_description": "这些设置现在按集合进行管理。",
         "moved_notice_link_invites": "集合邀请",
@@ -737,6 +829,7 @@
         "moved_notice_link_settings": "集合币种设置",
         "moved_notice_title": "正在寻找通知器、邀请或货币设置？",
         "new_password": "新密码",
+        "no_api_keys": "尚无 API 密钥",
         "no_notifiers": "尚未配置通知器",
         "no_override": "不覆盖",
         "notifier_modal": "{ type, select, true {编辑} false {创建} other {Other}} 通知器",
@@ -748,15 +841,21 @@
         "theme_settings_sub": "主题设置存储在浏览器的本地存储中。您可以随时更改主题。\n如果您在设置主题时遇到问题，请尝试刷新浏览器。",
         "toast": {
             "account_deleted": "您的账户已删除。",
+            "api_key_created": "API 密钥已创建。",
+            "api_key_deleted": "API 密钥已撤销。",
+            "failed_api_key_create": "创建 API 密钥失败。",
+            "failed_api_key_delete": "撤销 API 密钥失败。",
             "failed_change_password": "无法更改密码。",
             "failed_create_notifier": "创建通知器失败。",
             "failed_delete_account": "无法删除您的账号。",
             "failed_delete_notifier": "无法删除通知器。",
             "failed_get_currencies": "获取币种失败",
+            "failed_logout_all": "从所有设备登出失败。",
             "failed_test_notifier": "测试通知器失败。",
             "failed_update_group": "更新群组失败",
             "failed_update_notifier": "更新通知器失败。",
             "group_updated": "已更新群组",
+            "logout_all_success": "已从所有设备登出。",
             "notifier_test_success": "通知器测试成功。",
             "password_changed": "已成功修改密码。"
         },
@@ -817,6 +916,22 @@
         "title": "扫描器",
         "unsupported": "媒体流API只在HTTPS环境下支持"
     },
+    "scanner_ar": {
+        "ar_mode": "AR模式",
+        "back": "返回",
+        "child_items": "{count, plural, other {个子物品}}",
+        "children": "{count, plural, other {个子位置}}",
+        "items": "{count, plural, other {件物品}}",
+        "items_in_location": "{count, plural, other {件物品}}",
+        "more": "件",
+        "not_found": "未找到目标",
+        "qty": "数量",
+        "retry": "重试",
+        "scanning": "扫描中",
+        "switch_camera": "切换摄像头",
+        "title": "AR扫描器",
+        "unsupported": "当前浏览器不支持AR扫描"
+    },
     "tags": {
         "no_results": "未找到标签",
         "tag_delete_confirm": "确定要删除此标签吗？此操作无法撤销。",
@@ -861,6 +976,26 @@
             "zero_datetimes_sub": "将库存中所有日期时间字段的值重置为开始日期。这是为了修复在网站开发早期出现的一个错误，该错误导致自定义时间值保存时，日期会出现偏移的问题。 '<a class=\"link\" href=\"https://github.com/hay-kot/homebox/issues/236\" target=\"_blank\">'详细问题请参考 Github Issue #236 '</a>'"
         },
         "actions_sub": "将操作批量应用于您的库存。这些操作都是不可逆转的，'<b> '三思而后行！'</b>'",
+        "backups": "备份与恢复",
+        "backups_set": {
+            "create": "创建备份",
+            "create_button": "开始备份",
+            "create_sub": "构建一个包含此集合中全部实体、标签、自定义字段、附件和维护记录的 zip 文件。该任务在后台运行；完成后，备份将出现在下方表格中。",
+            "delete_confirm": "确定要删除此备份吗？此操作无法撤销。",
+            "download": "下载",
+            "failed": "备份失败，详情请查看服务器日志。",
+            "list_empty": "尚无备份。",
+            "restore": "从备份恢复",
+            "restore_button": "上传并恢复",
+            "restore_sub": "上传备份 zip 文件以填充此集合。此集合必须尚未包含任何物品——默认位置和标签会在恢复过程中自动清空。",
+            "table": {
+                "actions": "操作",
+                "created": "创建时间",
+                "size": "大小",
+                "status": "状态"
+            }
+        },
+        "backups_sub": "将您的整个集合（包含实体，标签，附件和元数据）导出为便携的 zip 归档文件。您可以将归档文件还原到当前或其他服务器上新注册的空集合中。",
         "demo_mode_error": {
             "wipe_inventory": "Homebox 处于演示模式时，无法清空库存、标签、位置和维护记录。请确认你不处于演示模式，然后再次尝试。"
         },
@@ -887,12 +1022,18 @@
         "reports_sub": "为您的库存生成各种报告。",
         "toast": {
             "asset_success": "{results}资产已更新。",
+            "backup_delete_failed": "删除备份失败。",
+            "backup_start_failed": "无法开始备份。",
+            "backup_started": "备份已开始，完成后会展示在表格中。",
             "failed_create_missing_thumbnails": "无法创建缺失的缩略图。",
             "failed_ensure_ids": "无法确认资产ID。",
             "failed_ensure_import_refs": "无法确认导入参考。",
             "failed_set_primary_photos": "无法设置封面。",
             "failed_wipe_inventory": "清空库存失败。",
             "failed_zero_datetimes": "无法重置日期和时间值。",
+            "restore_failed": "恢复失败。",
+            "restore_requires_empty": "恢复需要在没有物品的集合中进行。请切换到新注册的集合并重试（默认的位置和标签不影响恢复）。",
+            "restore_started": "恢复开始，请稍后刷新以查看导入的项目。",
             "wipe_inventory_success": "已成功清空库存。{ results }个物品已被删除。"
         }
     }

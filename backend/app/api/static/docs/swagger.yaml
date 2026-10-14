@@ -43,6 +43,43 @@ definitions:
       symbol:
         type: string
     type: object
+  ent.APIKey:
+    properties:
+      created_at:
+        description: CreatedAt holds the value of the "created_at" field.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.APIKeyEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the APIKeyQuery when eager-loading is set.
+      expires_at:
+        description: ExpiresAt holds the value of the "expires_at" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      last_used_at:
+        description: LastUsedAt holds the value of the "last_used_at" field.
+        type: string
+      name:
+        description: Name holds the value of the "name" field.
+        type: string
+      updated_at:
+        description: UpdatedAt holds the value of the "updated_at" field.
+        type: string
+      user_id:
+        description: UserID holds the value of the "user_id" field.
+        type: string
+    type: object
+  ent.APIKeyEdges:
+    properties:
+      user:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: User holds the value of the user edge.
+    type: object
   ent.Attachment:
     properties:
       created_at:
@@ -258,6 +295,15 @@ definitions:
         allOf:
         - $ref: '#/definitions/ent.Group'
         description: Group holds the value of the group edge.
+      location:
+        allOf:
+        - $ref: '#/definitions/ent.Entity'
+        description: Location holds the value of the location edge.
+      location_entities:
+        description: LocationEntities holds the value of the location_entities edge.
+        items:
+          $ref: '#/definitions/ent.Entity'
+        type: array
       maintenance_entries:
         description: MaintenanceEntries holds the value of the maintenance_entries
           edge.
@@ -453,6 +499,54 @@ definitions:
         - $ref: '#/definitions/ent.Group'
         description: Group holds the value of the group edge.
     type: object
+  ent.Export:
+    properties:
+      artifact_path:
+        description: ArtifactPath holds the value of the "artifact_path" field.
+        type: string
+      created_at:
+        description: CreatedAt holds the value of the "created_at" field.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ExportEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ExportQuery when eager-loading is set.
+      error:
+        description: Error holds the value of the "error" field.
+        type: string
+      group_id:
+        description: GroupID holds the value of the "group_id" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      kind:
+        allOf:
+        - $ref: '#/definitions/export.Kind'
+        description: Kind holds the value of the "kind" field.
+      progress:
+        description: Progress holds the value of the "progress" field.
+        type: integer
+      size_bytes:
+        description: SizeBytes holds the value of the "size_bytes" field.
+        type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/export.Status'
+        description: Status holds the value of the "status" field.
+      updated_at:
+        description: UpdatedAt holds the value of the "updated_at" field.
+        type: string
+    type: object
+  ent.ExportEdges:
+    properties:
+      group:
+        allOf:
+        - $ref: '#/definitions/ent.Group'
+        description: Group holds the value of the group edge.
+    type: object
   ent.Group:
     properties:
       created_at:
@@ -494,6 +588,11 @@ definitions:
         items:
           $ref: '#/definitions/ent.EntityType'
         type: array
+      exports:
+        description: Exports holds the value of the exports edge.
+        items:
+          $ref: '#/definitions/ent.Export'
+        type: array
       invitation_tokens:
         description: InvitationTokens holds the value of the invitation_tokens edge.
         items:
@@ -508,6 +607,11 @@ definitions:
         description: Tags holds the value of the tags edge.
         items:
           $ref: '#/definitions/ent.Tag'
+        type: array
+      user_groups:
+        description: UserGroups holds the value of the user_groups edge.
+        items:
+          $ref: '#/definitions/ent.UserGroup'
         type: array
       users:
         description: Users holds the value of the users edge.
@@ -630,6 +734,45 @@ definitions:
         allOf:
         - $ref: '#/definitions/ent.Group'
         description: Group holds the value of the group edge.
+      user:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: User holds the value of the user edge.
+    type: object
+  ent.PasswordResetTokens:
+    properties:
+      created_at:
+        description: CreatedAt holds the value of the "created_at" field.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.PasswordResetTokensEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the PasswordResetTokensQuery when eager-loading is set.
+      expires_at:
+        description: ExpiresAt holds the value of the "expires_at" field.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      token:
+        description: Token holds the value of the "token" field.
+        items:
+          type: integer
+        type: array
+      updated_at:
+        description: UpdatedAt holds the value of the "updated_at" field.
+        type: string
+      used_at:
+        description: UsedAt holds the value of the "used_at" field.
+        type: string
+      user_id:
+        description: UserID holds the value of the "user_id" field.
+        type: string
+    type: object
+  ent.PasswordResetTokensEdges:
+    properties:
       user:
         allOf:
         - $ref: '#/definitions/ent.User'
@@ -768,10 +911,6 @@ definitions:
       oidc_subject:
         description: OidcSubject holds the value of the "oidc_subject" field.
         type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/user.Role'
-        description: Role holds the value of the "role" field.
       settings:
         additionalProperties: true
         description: Settings holds the value of the "settings" field.
@@ -785,6 +924,11 @@ definitions:
     type: object
   ent.UserEdges:
     properties:
+      api_keys:
+        description: APIKeys holds the value of the api_keys edge.
+        items:
+          $ref: '#/definitions/ent.APIKey'
+        type: array
       auth_tokens:
         description: AuthTokens holds the value of the auth_tokens edge.
         items:
@@ -800,6 +944,47 @@ definitions:
         items:
           $ref: '#/definitions/ent.Notifier'
         type: array
+      password_reset_tokens:
+        description: PasswordResetTokens holds the value of the password_reset_tokens
+          edge.
+        items:
+          $ref: '#/definitions/ent.PasswordResetTokens'
+        type: array
+      user_groups:
+        description: UserGroups holds the value of the user_groups edge.
+        items:
+          $ref: '#/definitions/ent.UserGroup'
+        type: array
+    type: object
+  ent.UserGroup:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.UserGroupEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the UserGroupQuery when eager-loading is set.
+      group_id:
+        description: GroupID holds the value of the "group_id" field.
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/usergroup.Role'
+        description: Role holds the value of the "role" field.
+      user_id:
+        description: UserID holds the value of the "user_id" field.
+        type: string
+    type: object
+  ent.UserGroupEdges:
+    properties:
+      group:
+        allOf:
+        - $ref: '#/definitions/ent.Group'
+        description: Group holds the value of the group edge.
+      user:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: User holds the value of the user edge.
     type: object
   entityfield.Type:
     enum:
@@ -813,6 +998,78 @@ definitions:
     - TypeNumber
     - TypeBoolean
     - TypeTime
+  export.Kind:
+    enum:
+    - export
+    - export
+    - import
+    type: string
+    x-enum-varnames:
+    - DefaultKind
+    - KindExport
+    - KindImport
+  export.Status:
+    enum:
+    - pending
+    - pending
+    - running
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - DefaultStatus
+    - StatusPending
+    - StatusRunning
+    - StatusCompleted
+    - StatusFailed
+  repo.APIKeyCreate:
+    properties:
+      expiresAt:
+        type: string
+        x-nullable: true
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  repo.APIKeyCreatedOut:
+    properties:
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+        x-nullable: true
+      id:
+        type: string
+      lastUsedAt:
+        type: string
+        x-nullable: true
+      name:
+        type: string
+      token:
+        type: string
+      userId:
+        type: string
+    type: object
+  repo.APIKeyOut:
+    properties:
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+        x-nullable: true
+      id:
+        type: string
+      lastUsedAt:
+        type: string
+        x-nullable: true
+      name:
+        type: string
+      userId:
+        type: string
+    type: object
   repo.BarcodeProduct:
     properties:
       barcode:
@@ -852,6 +1109,25 @@ definitions:
         type: string
       entityTypeId:
         type: string
+      locationId:
+        description: Only needed when ParentID is another item and this lives elsewhere
+          (#1688).
+        type: string
+        x-nullable: true
+        x-omitempty: true
+      manufacturer:
+        maxLength: 255
+        type: string
+        x-nullable: true
+        x-omitempty: true
+      modelNumber:
+        description: |-
+          Identifications — optional at create time; populated e.g. by the
+          barcode product-search import flow (#1578).
+        maxLength: 255
+        type: string
+        x-nullable: true
+        x-omitempty: true
       name:
         maxLength: 255
         minLength: 1
@@ -943,6 +1219,22 @@ definitions:
       lifetimeWarranty:
         description: Warranty
         type: boolean
+      location:
+        allOf:
+        - $ref: '#/definitions/repo.EntitySummary'
+        description: |-
+          Location is resolved: this entity's own location, else the nearest
+          location ancestor. Read-only — write via LocationID.
+        x-nullable: true
+        x-omitempty: true
+      locationId:
+        description: |-
+          LocationID is set only when this entity has its own location, nil when
+          inherited. Same name as the EntityUpdate field so a GET/PUT round trip
+          doesn't pin an inherited location or drop an explicit one.
+        type: string
+        x-nullable: true
+        x-omitempty: true
       manufacturer:
         type: string
       modelNumber:
@@ -1005,6 +1297,10 @@ definitions:
         x-omitempty: true
       id:
         type: string
+      locationId:
+        type: string
+        x-nullable: true
+        x-omitempty: true
       parentId:
         type: string
         x-nullable: true
@@ -1352,6 +1648,13 @@ definitions:
       lifetimeWarranty:
         description: Warranty
         type: boolean
+      locationId:
+        description: |-
+          Only needed when ParentID is another item and this lives elsewhere (#1688).
+          Otherwise ParentID carries the location. See resolveLocationOverride.
+        type: string
+        x-nullable: true
+        x-omitempty: true
       manufacturer:
         type: string
       modelNumber:
@@ -1407,6 +1710,33 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  repo.ExportOut:
+    properties:
+      artifactPath:
+        type: string
+      createdAt:
+        type: string
+      error:
+        type: string
+      groupId:
+        type: string
+      id:
+        type: string
+      kind:
+        description: |-
+          Kind is "export" for server-produced backup artifacts, "import" for
+          user-uploaded restore zips. The lifecycle fields below behave the
+          same for both.
+        type: string
+      progress:
+        type: integer
+      sizeBytes:
+        type: integer
+      status:
+        type: string
+      updatedAt:
+        type: string
     type: object
   repo.Group:
     properties:
@@ -1775,8 +2105,6 @@ definitions:
         type: array
       id:
         type: string
-      isOwner:
-        type: boolean
       isSuperuser:
         type: boolean
       name:
@@ -1792,8 +2120,6 @@ definitions:
         type: string
       id:
         type: string
-      isOwner:
-        type: boolean
       name:
         type: string
     type: object
@@ -1858,7 +2184,7 @@ definitions:
     - TypeNumber
     - TypeBoolean
     - TypeTime
-  user.Role:
+  usergroup.Role:
     enum:
     - user
     - user
@@ -1928,6 +2254,15 @@ definitions:
       description:
         maxLength: 1000
         type: string
+      entityTypeId:
+        description: |-
+          EntityTypeID is the entity type selected by the user. When set it takes
+          precedence; when empty the repository falls back to the group's default.
+        type: string
+      locationId:
+        type: string
+        x-nullable: true
+        x-omitempty: true
       name:
         maxLength: 255
         minLength: 1
@@ -1943,6 +2278,14 @@ definitions:
     required:
     - name
     - parentId
+    type: object
+  v1.ForgotPasswordRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    required:
+    - email
     type: object
   v1.GroupAcceptInvitationResponse:
     properties:
@@ -1973,13 +2316,6 @@ definitions:
     required:
     - uses
     type: object
-  v1.GroupMemberAdd:
-    properties:
-      userId:
-        type: string
-    required:
-    - userId
-    type: object
   v1.LoginForm:
     properties:
       password:
@@ -2001,6 +2337,25 @@ definitions:
         type: string
       enabled:
         type: boolean
+    type: object
+  v1.ResetPasswordRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      token:
+        minLength: 20
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  v1.Results-repo_ExportOut:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/repo.ExportOut'
+        type: array
     type: object
   v1.TelemetryStatus:
     properties:
@@ -2028,6 +2383,17 @@ definitions:
   v1.Wrapped:
     properties:
       item: {}
+    type: object
+  v1.externalAttachmentRequest:
+    properties:
+      attachment_type:
+        type: string
+      external_id:
+        type: string
+      source_type:
+        type: string
+      title:
+        type: string
     type: object
   validate.ErrorResponse:
     properties:
@@ -2160,7 +2526,7 @@ paths:
       summary: Get Item by Asset ID
       tags:
       - Items
-  /v1/currency:
+  /v1/currencies:
     get:
       produces:
       - application/json
@@ -2175,7 +2541,9 @@ paths:
   /v1/entities:
     get:
       parameters:
-      - description: search string
+      - description: 'search string; matches names, descriptions, serial/model numbers,
+          manufacturers, notes, purchase sources, tag names, and custom field values.
+          Use #<assetId> to look up by asset ID and double quotes for exact phrases'
         in: query
         name: q
         type: string
@@ -2194,6 +2562,10 @@ paths:
           type: string
         name: tags
         type: array
+      - description: require all selected tags to match (AND) instead of any (OR)
+        in: query
+        name: matchAllTags
+        type: boolean
       - collectionFormat: multi
         description: parent Ids
         in: query
@@ -2201,6 +2573,24 @@ paths:
           type: string
         name: parentIds
         type: array
+      - collectionFormat: multi
+        description: entity type IDs; when provided this filter takes precedence over
+          isLocation
+        in: query
+        items:
+          type: string
+        name: entityTypeIds
+        type: array
+      - description: 'field to order by; valid values: name, createdAt, updatedAt,
+          assetId'
+        in: query
+        name: orderBy
+        type: string
+      - description: 'order direction; valid values: asc, desc. Defaults to desc for
+          createdAt and updatedAt, asc otherwise'
+        in: query
+        name: orderDirection
+        type: string
       produces:
       - application/json
       responses:
@@ -2435,6 +2825,40 @@ paths:
       security:
       - Bearer: []
       summary: Update Entity Attachment
+      tags:
+      - Entities Attachments
+  /v1/entities/{id}/attachments/external:
+    post:
+      consumes:
+      - application/json
+      description: Links an entity to a document or URL in an external system without
+        copying
+      parameters:
+      - description: Entity ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: External document reference
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/v1.externalAttachmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/repo.EntityOut'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/validate.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Create External Link Attachment
       tags:
       - Entities Attachments
   /v1/entities/{id}/duplicate:
@@ -2713,6 +3137,117 @@ paths:
       summary: Update Entity Type
       tags:
       - Entity Types
+  /v1/group/exports:
+    get:
+      description: Returns export job rows for the caller's group, newest first.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.Results-repo_ExportOut'
+      security:
+      - Bearer: []
+      summary: List Collection Exports
+      tags:
+      - Group
+    post:
+      description: Creates a pending export row and enqueues the build job. Poll the
+        listing endpoint or watch the WebSocket for completion.
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/repo.ExportOut'
+      security:
+      - Bearer: []
+      summary: Start a Collection Export
+      tags:
+      - Group
+  /v1/group/exports/{id}:
+    delete:
+      description: Deletes the export row and its blob artifact.
+      parameters:
+      - description: Export ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - Bearer: []
+      summary: Delete an Export
+      tags:
+      - Group
+    get:
+      parameters:
+      - description: Export ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repo.ExportOut'
+      security:
+      - Bearer: []
+      summary: Get an Export
+      tags:
+      - Group
+  /v1/group/exports/{id}/download:
+    get:
+      parameters:
+      - description: Export ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - Bearer: []
+      summary: Download an Export Artifact
+      tags:
+      - Group
+  /v1/group/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a collection-export zip and enqueues the import job. The
+        destination group must be empty. Returns the tracked import row so clients
+        can poll for progress.
+      parameters:
+      - description: Export zip
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/repo.ExportOut'
+      security:
+      - Bearer: []
+      summary: Import a Collection Zip
+      tags:
+      - Group
   /v1/groups:
     delete:
       produces:
@@ -2883,24 +3418,6 @@ paths:
       security:
       - Bearer: []
       summary: Get All Group Members
-      tags:
-      - Group
-    post:
-      parameters:
-      - description: User ID
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/v1.GroupMemberAdd'
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - Bearer: []
-      summary: Add User to Group
       tags:
       - Group
   /v1/groups/members/{user_id}:
@@ -3531,6 +4048,40 @@ paths:
       summary: Change Password
       tags:
       - User
+  /v1/users/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Sends a password reset email if the address is associated with a local account.
+        Always returns 204 on success to avoid leaking whether the email is registered.
+      parameters:
+      - description: Email
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: missing or invalid request body, or empty email field
+          schema:
+            type: string
+        "403":
+          description: demo mode is enabled or local login is disabled
+          schema:
+            type: string
+        "500":
+          description: internal error while processing the request
+          schema:
+            type: string
+      summary: Request Password Reset
+      tags:
+      - Authentication
   /v1/users/login:
     post:
       consumes:
@@ -3596,6 +4147,21 @@ paths:
       summary: User Logout
       tags:
       - Authentication
+  /v1/users/logout/all:
+    post:
+      description: |-
+        Revokes every session token for the authenticated user across all
+        devices, including the current one. Use this to invalidate a session
+        token that may have been leaked or stolen. API keys are stored
+        separately and are not affected; revoke them from the API keys page.
+      responses:
+        "204":
+          description: No Content
+      security:
+      - Bearer: []
+      summary: Log Out Of All Sessions
+      tags:
+      - Authentication
   /v1/users/refresh:
     get:
       description: |-
@@ -3630,6 +4196,41 @@ paths:
       summary: Register New User
       tags:
       - User
+  /v1/users/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Consumes a single-use reset token and changes the user's password.
+        On success, all existing sessions for the user are revoked.
+      parameters:
+      - description: Token + new password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid request body, password shorter than the minimum length,
+            or token that is invalid / expired / already used
+          schema:
+            type: string
+        "403":
+          description: demo mode is enabled or local login is disabled
+          schema:
+            type: string
+        "500":
+          description: internal error while processing the request
+          schema:
+            type: string
+      summary: Reset Password
+      tags:
+      - Authentication
   /v1/users/self:
     delete:
       produces:
@@ -3683,6 +4284,58 @@ paths:
       security:
       - Bearer: []
       summary: Update Account
+      tags:
+      - User
+  /v1/users/self/api-keys:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/repo.APIKeyOut'
+            type: array
+      security:
+      - Bearer: []
+      summary: List API Keys
+      tags:
+      - User
+    post:
+      parameters:
+      - description: API Key Data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/repo.APIKeyCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/repo.APIKeyCreatedOut'
+      security:
+      - Bearer: []
+      summary: Create API Key
+      tags:
+      - User
+  /v1/users/self/api-keys/{id}:
+    delete:
+      parameters:
+      - description: API Key ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      security:
+      - Bearer: []
+      summary: Delete API Key
       tags:
       - User
   /v1/users/self/settings:

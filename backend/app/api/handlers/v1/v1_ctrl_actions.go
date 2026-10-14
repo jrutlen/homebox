@@ -110,8 +110,8 @@ type WipeInventoryOptions struct {
 //	@Description	Deletes all items in the inventory
 //	@Tags			Actions
 //	@Produce		json
-//	@Param			options	body	WipeInventoryOptions	false	"Wipe options"
-//	@Success		200	{object}	ActionAmountResult
+//	@Param			options	body		WipeInventoryOptions	false	"Wipe options"
+//	@Success		200		{object}	ActionAmountResult
 //	@Router			/v1/actions/wipe-inventory [Post]
 //	@Security		Bearer
 func (ctrl *V1Controller) HandleWipeInventory() errchain.HandlerFunc {
@@ -122,8 +122,11 @@ func (ctrl *V1Controller) HandleWipeInventory() errchain.HandlerFunc {
 
 		ctx := services.NewContext(r.Context())
 
-		// Check if user is owner
-		if !ctx.User.IsOwner {
+		isOwner, err := ctrl.repo.Groups.IsOwnerOf(ctx, ctx.UID, ctx.GID)
+		if err != nil {
+			return validate.NewRequestError(err, http.StatusInternalServerError)
+		}
+		if !isOwner {
 			return validate.NewRequestError(errors.New("only group owners can wipe inventory"), http.StatusForbidden)
 		}
 

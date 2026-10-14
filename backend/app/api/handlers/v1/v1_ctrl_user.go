@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -17,13 +18,13 @@ import (
 
 // HandleUserRegistration godoc
 //
-//		@Summary	Register New User
-//		@Tags		User
-//		@Produce	json
-//		@Param		payload	body	services.UserRegistration	true	"User Data"
-//		@Success	204
-//	 @Failure    403 {string} string "Local login is not enabled"
-//		@Router		/v1/users/register [Post]
+//	@Summary	Register New User
+//	@Tags		User
+//	@Produce	json
+//	@Param		payload	body	services.UserRegistration	true	"User Data"
+//	@Success	204
+//	@Failure	403	{string}	string	"Local login is not enabled"
+//	@Router		/v1/users/register [Post]
 func (ctrl *V1Controller) HandleUserRegistration() errchain.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		spanCtx, span := startEntityCtrlSpan(r.Context(), "controller.V1.HandleUserRegistration")
@@ -84,18 +85,17 @@ func (ctrl *V1Controller) HandleUserSelf() errchain.HandlerFunc {
 		spanCtx, span := startEntityCtrlSpan(r.Context(), "controller.V1.HandleUserSelf")
 		defer span.End()
 
-		token := services.UseTokenCtx(spanCtx)
-		span.SetAttributes(attribute.Bool("token.present", token != ""))
-		usr, err := ctrl.svc.User.GetSelf(spanCtx, token)
-		if usr.ID == uuid.Nil || err != nil {
-			recordCtrlSpanError(span, err)
+		// The auth middleware has already loaded the user (handles both
+		// session tokens and API keys); just return what's in context.
+		usr := services.UseUserCtx(spanCtx)
+		if usr == nil || usr.ID == uuid.Nil {
 			span.SetAttributes(attribute.String("self.outcome", "lookup_failed"))
-			log.Err(err).Msg("failed to get user")
-			return validate.NewRequestError(err, http.StatusInternalServerError)
+			log.Err(errors.New("user context not found")).Msg("failed to get user")
+			return validate.NewRequestError(errors.New("user not found in context"), http.StatusInternalServerError)
 		}
 		span.SetAttributes(attribute.String("user.id", usr.ID.String()))
 
-		return server.JSON(w, http.StatusOK, Wrap(usr))
+		return server.JSON(w, http.StatusOK, Wrap(*usr))
 	}
 }
 

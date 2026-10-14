@@ -147,7 +147,7 @@ func (s *IOSheet) Read(data io.Reader) error {
 
 			switch field.Type {
 			case reflect.TypeOf(""):
-				v = val
+				v = restoreCSVCell(val)
 			case reflect.TypeOf(int(0)):
 				v = parseInt(val)
 			case reflect.TypeOf(bool(false)):
@@ -161,9 +161,9 @@ func (s *IOSheet) Read(data io.Reader) error {
 			case reflect.TypeOf(repo.AssetID(0)):
 				v, _ = repo.ParseAssetID(val)
 			case reflect.TypeOf(LocationString{}):
-				v = parseLocationString(val)
+				v = parseLocationString(restoreCSVCell(val))
 			case reflect.TypeOf(TagString{}):
-				v = parseTagString(val)
+				v = parseTagString(restoreCSVCell(val))
 			}
 
 			log.Debug().
@@ -183,7 +183,7 @@ func (s *IOSheet) Read(data io.Reader) error {
 
 		for _, col := range s.custom {
 			colName := strings.TrimPrefix(s.headers[col], "HB.field.")
-			customVal := row[col]
+			customVal := restoreCSVCell(row[col])
 			if customVal == "" {
 				continue
 			}
@@ -205,20 +205,35 @@ func (s *IOSheet) ReadItems(ctx context.Context, entities []repo.EntityOut, gid 
 	s.Rows = make([]ExportCSVRow, len(entities))
 
 	extraHeaders := map[string]struct{}{}
+	entitiesByID := lo.SliceToMap(entities, func(item repo.EntityOut) (uuid.UUID, repo.EntityOut) {
+		return item.ID, item
+	})
 
 	for i := range entities {
 		item := entities[i]
 
-		// Resolve parent (location) path
 		var locString LocationString
+		var parentImportRef string
 		if item.Parent != nil {
-			locPaths, err := repos.Entities.PathForEntity(ctx, gid, item.Parent.ID)
-			if err != nil {
-				log.Error().Err(err).Msg("could not get entity path")
-				return err
+			locationParentID := item.Parent.ID
+
+			if parent, ok := entitiesByID[item.Parent.ID]; ok && parent.EntityType != nil && !parent.EntityType.IsLocation {
+				parentImportRef = parent.ImportRef
+				locationParentID = uuid.Nil
+				if parent.Parent != nil {
+					locationParentID = parent.Parent.ID
+				}
 			}
 
-			locString = fromPathSlice(locPaths)
+			if locationParentID != uuid.Nil {
+				locPaths, err := repos.Entities.PathForEntity(ctx, gid, locationParentID)
+				if err != nil {
+					log.Error().Err(err).Msg("could not get entity path")
+					return err
+				}
+
+				locString = fromPathSlice(locPaths)
+			}
 		}
 
 		tagString := lo.Map(item.Tags, func(l repo.TagSummary, _ int) string {
@@ -240,14 +255,15 @@ func (s *IOSheet) ReadItems(ctx context.Context, entities []repo.EntityOut, gid 
 			Location: locString,
 			TagStr:   tagString,
 
-			ImportRef:   item.ImportRef,
-			AssetID:     item.AssetID,
-			Name:        item.Name,
-			Quantity:    item.Quantity,
-			Description: item.Description,
-			Insured:     item.Insured,
-			Archived:    item.Archived,
-			URL:         url,
+			ImportRef:       item.ImportRef,
+			ParentImportRef: parentImportRef,
+			AssetID:         item.AssetID,
+			Name:            item.Name,
+			Quantity:        item.Quantity,
+			Description:     item.Description,
+			Insured:         item.Insured,
+			Archived:        item.Archived,
+			URL:             url,
 
 			PurchasePrice: item.PurchasePrice,
 			PurchaseFrom:  item.PurchaseFrom,
@@ -339,7 +355,7 @@ func (s *IOSheet) CSV() ([][]string, error) {
 
 			switch field.Type {
 			case reflect.TypeOf(""):
-				v = val.String()
+				v = neutralizeCSVCell(val.String())
 			case reflect.TypeOf(int(0)):
 				v = strconv.Itoa(int(val.Int()))
 			case reflect.TypeOf(bool(false)):
@@ -353,9 +369,9 @@ func (s *IOSheet) CSV() ([][]string, error) {
 			case reflect.TypeOf(repo.AssetID(0)):
 				v = val.Interface().(repo.AssetID).String()
 			case reflect.TypeOf(LocationString{}):
-				v = val.Interface().(LocationString).String()
+				v = neutralizeCSVCell(val.Interface().(LocationString).String())
 			case reflect.TypeOf(TagString{}):
-				v = val.Interface().(TagString).String()
+				v = neutralizeCSVCell(val.Interface().(TagString).String())
 			default:
 				log.Debug().Str("type", field.Type.String()).Msg("unknown type")
 			}
@@ -369,7 +385,7 @@ func (s *IOSheet) CSV() ([][]string, error) {
 				continue
 			}
 
-			memcsv[i+1][col] = f.Value
+			memcsv[i+1][col] = neutralizeCSVCell(f.Value)
 		}
 	}
 

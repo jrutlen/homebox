@@ -35,6 +35,7 @@
         "no_invites": "Geen uitnodigingen",
         "remaining_uses": "Resterende toepassingen",
         "tabs": {
+            "entity_types": "Entiteitstypen",
             "invites": "Uitnodigingen",
             "members": "Leden",
             "notifiers": "Notificaties",
@@ -116,7 +117,88 @@
             "no_color_selected": "Geen kleur geselecteerd",
             "randomize": "Kleur willekeurig maken"
         },
+        "entity": {
+            "create_modal": {
+                "clear_template": "Template wissen",
+                "delete_photo": "Afbeelding verwijderen",
+                "entity_description": "{type} Beschrijving",
+                "entity_name": "{type} Naam",
+                "entity_photo": "{type} Afbeelding 📷",
+                "entity_quantity": "{type} Hoeveelheid",
+                "item_selector_no_results_text": "Typ om te zoeken…",
+                "parent_item": "Bovenliggend item",
+                "product_tooltip_input_barcode": "Autofill met zelfgemaakte streepjescode",
+                "product_tooltip_scan_barcode": "Autofill met streepjescode van 📷",
+                "rotate_photo": "Afbeelding draaien",
+                "set_as_primary_photo": "Stel in als { isPrimary, select, true {non-} false {} other {}}primaire afbeelding",
+                "toast": {
+                    "already_creating": "Er wordt al een {type} aangemaakt",
+                    "create_failed": "{type} kon niet worden aangemaakt",
+                    "create_success": "{type} aangemaakt",
+                    "failed_load_parent": "Kan bovenliggend item niet laden - selecteer handmatig",
+                    "no_canvas_support": "Je browser ondersteunt geen canvas-bewerkingen",
+                    "please_select_entity_type": "Kies een entiteitstype.",
+                    "please_select_location": "Selecteer een locatie.",
+                    "rotate_failed": "Draaien van afbeelding mislukt: { error }",
+                    "rotate_process_failed": "Kan gedraaide afbeelding niet verwerken",
+                    "some_photos_failed": "{count, plural, =0 {Geen afbeeldingen om te uploaden.} =1 {1 afbeelding uploaden mislukt.} other {Sommige afbeeldingen konden niet worden geüpload.}}",
+                    "upload_failed": "Afbeelding uploaden mislukt: { photoName }",
+                    "upload_success": "{count, plural, =0 {Geen afbeelding geüpload.} =1 {Afbeelding succesvol geüpload.} other {Alle afbeeldingen succesvol geüpload.}}",
+                    "uploading_photos": "{count, plural, =0 {Geen afbeeldingen om te uploaden} =1 {1 afbeelding uploaden…} other {{count} afbeeldingen uploaden…}}"
+                },
+                "upload_photos": "Afbeeldingen toevoegen",
+                "uploaded": "Geüploade afbeelding"
+            },
+            "selector": {
+                "placeholder": "Selecteer een type…"
+            }
+        },
+        "entityTypes": {
+            "card": {
+                "actions": {
+                    "delete": "Verwijder"
+                },
+                "badge_container": "Container",
+                "default_template": "Standaard template: {name}",
+                "tooltip": {
+                    "delete": "Verwijder",
+                    "edit": "Bewerk"
+                }
+            },
+            "confirm": {
+                "convert_item_to_location": "Als u een itemtype omzet naar een locatietype, gaan er velden verloren voor entiteiten die dit type gebruiken. Weet u zeker dat u door wilt gaan?",
+                "delete_entity_type": "Ben je zeker dat je \"{name}\" wil verwijderen?"
+            },
+            "create_dialog": {
+                "button": "Aanmaken",
+                "is_container_location_type_label": "Is een container / locatie type",
+                "name_label": "Naam",
+                "title": "Entiteitstype aanmaken"
+            },
+            "page": {
+                "create": "Aanmaken",
+                "empty_button": "Entiteitstype aanmaken",
+                "empty_title": "Nog geen entiteitstypes gedefinieerd.",
+                "title": "Entiteitstypen"
+            },
+            "toasts": {
+                "create_failed": "Entiteitstype aanmaken mislukt",
+                "create_success": "Entiteitstype aangemaakt",
+                "delete_confirm_failed": "Entiteitstype verwijderen mislukt. Zorg ervoor dat geen enkele entiteit dit gebruikt.",
+                "delete_success": "Entiteitstype verwijderd",
+                "name_required": "Naam is verplicht",
+                "update_failed": "Entiteitstype updaten mislukt",
+                "update_success": "Entiteitstype geüpdatet"
+            },
+            "update_dialog": {
+                "button": "Update",
+                "is_container_location_type_label": "Is een container / locatie type",
+                "name_label": "Naam",
+                "title": "Entiteitstype updaten"
+            }
+        },
         "form": {
+            "min_length": "min {min}",
             "password": {
                 "toggle_show": "Wachtwoord zichtbaar maken aan/uitzetten"
             }
@@ -171,6 +253,7 @@
                 "qr_tooltip": "QR-code weergeven"
             },
             "password_score": {
+                "does_not_meet_requirement": "Voldoet niet aan de vereisten voor wachtwoordsterkte",
                 "password_strength": "Wachtwoord sterkte"
             }
         },
@@ -178,36 +261,6 @@
             "attachments_list": {
                 "download": "Download",
                 "open_new_tab": "Openen in een nieuw tabblad"
-            },
-            "create_modal": {
-                "clear_template": "Template wissen",
-                "delete_photo": "Foto verwijderen",
-                "item_description": "Artikelomschrijving",
-                "item_name": "Artikelnaam",
-                "item_photo": "Artikel Foto",
-                "item_quantity": "Item aantal",
-                "parent_item": "Hoofd Item",
-                "product_tooltip_input_barcode": "Vul automatisch in met een handmatig verstrekte streepjescode",
-                "product_tooltip_scan_barcode": "Vul automatisch in met een streepjescode van 📷",
-                "rotate_photo": "Foto roteren",
-                "set_as_primary_photo": "Instellen als { isPrimary, select, true {non-} false {} other {}}primaire foto",
-                "title": "Maak object",
-                "toast": {
-                    "already_creating": "Een item wordt al aangemaakt",
-                    "create_failed": "Kan item niet maken",
-                    "create_success": "Item aangemaakt",
-                    "failed_load_parent": "Kan bovenliggend item niet laden - selecteer handmatig",
-                    "no_canvas_support": "Je browser ondersteund geen canvas",
-                    "please_select_location": "Selecteer een locatie.",
-                    "rotate_failed": "Roteren van afbeelding mislukt: { error }",
-                    "rotate_process_failed": "Kan geroteerde afbeelding niet verwerken",
-                    "some_photos_failed": "{count, plural, =0 {Geen foto's om te uploaden.} =1 {1 foto kon niet worden geüpload.} other {Sommige foto's konden niet worden geüpload.}}",
-                    "upload_failed": "Kan foto niet uploaden: { photoName }",
-                    "upload_success": "{count, plural, =0 {Geen foto's geüpload.} =1 {Foto succesvol geüpload.} other {Alle foto's succesvol geüpload.}}",
-                    "uploading_photos": "{count, plural, =0 {Geen foto's om te uploaden} =1 {1 foto uploaden…} other {{count} foto's uploaden…}}"
-                },
-                "upload_photos": "Foto’s toevoegen",
-                "uploaded": "Geüploade foto"
             },
             "product_import": {
                 "barcode": "Barcode van het product",
@@ -278,16 +331,7 @@
             }
         },
         "location": {
-            "create_modal": {
-                "location_description": "Locatie omschrijving",
-                "location_name": "Locatie Naam",
-                "title": "Maak locatie",
-                "toast": {
-                    "already_creating": "Een locatie wordt al aangemaakt",
-                    "create_failed": "Kan locatie niet aanmaken",
-                    "create_success": "Locatie aangemaakt op"
-                }
-            },
+            "create_item": "Item aanmaken",
             "selector": {
                 "clear": "Wis Locatie Selectie",
                 "no_location_found": "Geen locatie gevonden",
@@ -312,7 +356,9 @@
             "create_modal": {
                 "tag_color": "Tag kleur",
                 "tag_description": "Tagbeschrijving",
+                "tag_icon": "Tag icoon",
                 "tag_name": "Tag naam",
+                "tag_parent": "Bovenliggende tag",
                 "title": "Tag aanmaken",
                 "toast": {
                     "already_creating": "Een tag wordt al aangemaakt",
@@ -322,6 +368,8 @@
                 }
             },
             "selector": {
+                "clear": "Leegmaken",
+                "no_tags_found": "Geen tags gevonden",
                 "select_tags": "Tag selecteren"
             }
         },
@@ -394,6 +442,7 @@
         "archived": "Gearchiveerd",
         "build": "Build: { build }",
         "cancel": "Annuleren",
+        "close": "Sluit",
         "confirm": "Bevestigen",
         "create": "Maken",
         "create_and_add": "Maak en voeg nog een toe",
@@ -406,6 +455,8 @@
         "duplicate": "Dupliceren",
         "edit": "Bewerk",
         "email": "E-mail",
+        "entity": "Entiteit",
+        "entity_type": "Entiteitstype",
         "follow_dev": "Volg de ontwikkelaar",
         "footer": {
             "api_link": "'<a href=\"https://homebox.software/en/api/\" target=\"_blank\">'API'</a>'",
@@ -413,9 +464,11 @@
         },
         "github": "GitHub Project",
         "insured": "Verzekerd",
+        "item": "Item",
         "items": "artikelen",
         "join_discord": "Sluit je aan bij de Discord",
         "loading": "Bezig met laden…",
+        "location": "Locatie",
         "locations": "Locaties",
         "maintenance": "Onderhoud",
         "name": "Naam",
@@ -428,9 +481,13 @@
         "return_home": "Terug naar startpagina",
         "save": "Opslaan",
         "search": "Zoeken",
+        "select": "Selecteer...",
+        "show_less": "Toon minder",
+        "show_more": "Toon meer",
         "sign_out": "Log uit",
         "submit": "Indienen",
         "tags": "Tags",
+        "type": "Type",
         "unknown": "Onbekend",
         "update": "Bijwerken",
         "updating": "Aan het updaten",
@@ -450,13 +507,25 @@
         "total_value": "Totale Waarde"
     },
     "index": {
+        "back_to_login": "Terug naar login",
         "disabled_registration": "Registratie uitgeschakeld",
         "dont_join_group": "Wil je je niet bij een groep aansluiten?",
+        "forgot_password": "Paswoord vergeten?",
+        "forgot_password_check_email": "Als dit e-mailadres aan een account is gekoppeld, ontvang je een link om het e-mailadres te resetten. Deze link is een uur geldig.",
+        "forgot_password_send": "Stuur reset link",
+        "forgot_password_subtitle": "Voer het e-mailadres van je account in en wij sturen je een link om je wachtwoord opnieuw in te stellen.",
+        "forgot_password_title": "Reset je wachtwoord",
         "joining_group": "Je sluit je aan bij een bestaande groep!",
         "login": "Log in",
         "or": "of",
         "register": "Registreer",
         "remember_me": "Onthoud mij",
+        "reset_password_invalid": "Deze resetlink is ongeldig of is verlopen. Vraag een nieuwe aan.",
+        "reset_password_missing_token": "De reset token ontbreekt. Open de link in je e-mail opnieuw of vraag een nieuwe token aan.",
+        "reset_password_set": "Nieuw wachtwoord instellen",
+        "reset_password_subtitle": "Kies een nieuw wachtwoord voor je account.",
+        "reset_password_success": "Je wachtwoord is opnieuw ingesteld. Log in met het nieuwe wachtwoord.",
+        "reset_password_title": "Reset je wachtwoord",
         "set_email": "Wat is je mailadres?",
         "set_name": "Wat is je naam?",
         "set_password": "Stel je wachtwoord in",
@@ -507,11 +576,12 @@
             "title": "Dupliceer instellingen"
         },
         "edit": {
+            "change_entity_type_confirm": "Het wijzigen van het entiteitstype kan leiden tot gegevensverlies in velden die niet door het huidige en het nieuwe entiteitstype worden gedeeld. Weet u zeker dat u het entiteitstype wilt wijzigen?",
             "edit_attachment_dialog": {
                 "attachment_title": "Bijlage titel",
                 "attachment_type": "Bijlagetype",
-                "primary_photo": "Primaire foto",
-                "primary_photo_sub": "Deze optie is alleen beschikbaar voor foto's. Er kan maar één primaire foto zijn. Als je deze optie selecteerd zal de huidige primaire foto worden gedeselecteerd.",
+                "primary_photo": "Primaire afbeelding",
+                "primary_photo_sub": "Deze optie is alleen beschikbaar voor afbeeldingen. Er kan maar één primaire afbeelding zijn. Als je deze optie selecteerd zal de huidige primaire afbeelding worden gedeselecteerd.",
                 "select_type": "Selecteer een type",
                 "title": "Bijlage bewerken"
             },
@@ -538,14 +608,14 @@
         "no_attachments": "Geen bijlagen gevonden",
         "no_results": "Geen Items Gevonden",
         "notes": "Opmerkingen",
-        "only_with_photo": "Alleen items met foto",
-        "only_without_photo": "Alleen items zonder foto",
+        "only_with_photo": "Alleen items met afbeelding",
+        "only_without_photo": "Alleen items zonder afbeelding",
         "options": "Opties",
         "order_by": "Sorteren op",
         "pages": "Pagina { page } van { totalPages }",
         "parent_item": "Hoofd Item",
-        "photo": "Foto",
-        "photos": "Foto's",
+        "photo": "Afbeelding",
+        "photos": "Afbeeldingen",
         "prev_page": "Vorige pagina",
         "purchase_date": "Aankoopdatum",
         "purchase_details": "Aankoopdetails",
@@ -575,11 +645,12 @@
         "toast": {
             "asset_not_found": "Item-ID niet gevonden",
             "attachment_deleted": "Bijlage verwijderd",
+            "attachment_too_large": "De bijlage is te groot: deze overschrijdt de maximale uploadgrootte van de server",
             "attachment_updated": "Bijlage bijgewerkt",
             "attachment_uploaded": "Bijlage geüpload",
             "child_items_location_no_longer_synced": "De locaties van onderliggende items worden niet meer gesynchroniseerd met dit item.",
             "child_items_location_synced": "De locaties van onderliggende items zijn gesynchroniseerd met dit item",
-            "child_location_desync": "Door de locatie te wijzigen, wordt de synchronisatie met de bovenliggende locatie ongedaan gemaakt",
+            "child_location_desync": "Het bovenliggende item is verwijderd — het item bevindt zich nu rechtstreeks op de geselecteerde locatie",
             "error_loading_parent_data": "Er is iets misgegaan bij het laden van bovenliggende gegevens",
             "failed_adjust_quantity": "Hoeveelheid aanpassen mislukt",
             "failed_delete_attachment": "Verwijderen van bijlage mislukt",
@@ -638,6 +709,8 @@
         "zh-TW": "Chinees (traditioneel)"
     },
     "languages.da-DK": "Deens",
+    "languages.el-GR": "Greek",
+    "languages.en@pirate": "Engels (Piraat)",
     "languages.ro-RO": "Roemeens",
     "languages.sk-SK": "Slowaaks",
     "languages.sq-AL": "Albanees",
@@ -715,6 +788,23 @@
     },
     "profile": {
         "active": "Actief",
+        "api_key_copied": "Gekopieerd naar het klembord",
+        "api_key_copy": "Kopieer",
+        "api_key_create": "API key aanmaken",
+        "api_key_created": "Aangemaakt",
+        "api_key_default_expiration": "Sleutels vervallen na 30 dagen, tenzij je een datum instelt.",
+        "api_key_delete_confirm": "Weet je zeker dat je deze API key wilt intrekken? Alle clients die deze key gebruiken, verliezen onmiddellijk hun toegang.",
+        "api_key_expires_at": "Verloopt",
+        "api_key_last_used": "Laatst gebruikt",
+        "api_key_name": "Naam",
+        "api_key_name_placeholder": "bvb. Home Assistant",
+        "api_key_never_used": "Nooit",
+        "api_key_no_expiration": "Geen vervaldatum",
+        "api_key_set_expiration": "Stel een vervaldatum in",
+        "api_key_token_label": "Je nieuwe API key",
+        "api_key_token_warning": "Kopieer deze token nu. Om veiligheidsredenen wordt deze niet opnieuw weergegeven.",
+        "api_keys": "API Keys",
+        "api_keys_sub": "Static tokens voor programmatic access. Elke key heeft dezelfde rechten als je account.",
         "change_password": "Verander Wachtwoord",
         "currency_format": "Valutanotatie",
         "current_password": "Huidig Wachtwoord",
@@ -730,6 +820,8 @@
         "inactive": "Inactief",
         "language": "Taal",
         "legacy_image_fit": "{ currentValue, select, true {Legacy fit uitschakelen: afbeelding aanpassen met balken} false {Legacy fit inschakelen: afbeelding vullen met bijsnijden} other {Overig}}",
+        "logout_all_confirm": "Hierdoor word je op alle apparaten uitgelogd, inclusief dit apparaat. Je moet opnieuw inloggen. Wil je doorgaan?",
+        "logout_all_devices": "Afmelden op alle apparaten",
         "moved_notice_body": "Notificaties, uitnodigingen en valuta-instellingen zijn verplaatst naar de collectiepagina's.",
         "moved_notice_description": "Deze instellingen worden nu per collectie beheerd.",
         "moved_notice_link_invites": "Uitnodigingen collectie",
@@ -737,6 +829,7 @@
         "moved_notice_link_settings": "Valuta-instellingen collectie",
         "moved_notice_title": "Op zoek naar notificaties, uitnodigingen of valuta-instellingen?",
         "new_password": "Nieuw Wachtwoord",
+        "no_api_keys": "Nog geen API keys",
         "no_notifiers": "Geen melders geconfigureerd",
         "no_override": "Niet overschrijven",
         "notifier_modal": "{ type, select, true {Bewerk} false {Creëer} other {Overig}} Notifier",
@@ -748,15 +841,21 @@
         "theme_settings_sub": "Thema-instellingen worden opgeslagen in de lokale opslag van uw browser. Je kan deze wijzigen op elk moment. \nAls je problemen hebt met de instellingen kun je de browser verversen.",
         "toast": {
             "account_deleted": "Uw account is verwijderd.",
+            "api_key_created": "API key aangemaakt.",
+            "api_key_deleted": "API key ingetrokken.",
+            "failed_api_key_create": "API key aanmaken mislukt.",
+            "failed_api_key_delete": "Intrekken API-key mislukt.",
             "failed_change_password": "Wijzigen wachtwoord mislukt.",
             "failed_create_notifier": "Aanmaken notificatie mislukt.",
             "failed_delete_account": "Verwijderen van uw account mislukt.",
             "failed_delete_notifier": "Verwijderen notificatie mislukt.",
             "failed_get_currencies": "Valuta ophalen mislukt",
+            "failed_logout_all": "Het is niet gelukt om op alle apparaten uit te loggen.",
             "failed_test_notifier": "Testen van notificatie mislukt.",
             "failed_update_group": "Bijwerken groep mislukt",
             "failed_update_notifier": "Bijwerken notificatie mislukt.",
             "group_updated": "Groep geüpdatet",
+            "logout_all_success": "Afgemeld op alle apparaten.",
             "notifier_test_success": "Notificatie test geslaagd.",
             "password_changed": "Wachtwoord wijzigen gelukt."
         },
@@ -817,6 +916,22 @@
         "title": "Scanner",
         "unsupported": "Mediastream-API wordt niet ondersteund zonder HTTPS"
     },
+    "scanner_ar": {
+        "ar_mode": "AR Mode",
+        "back": "Terug",
+        "child_items": "{count, plural, one {onderliggend item} other {onderliggende items}}",
+        "children": "{count, plural, one {sublocatie} other {sublocaties}}",
+        "items": "{count, plural, one {item} other {items}}",
+        "items_in_location": "{count, plural, one {item} other {items}}",
+        "more": "meer",
+        "not_found": "Item niet gevonden",
+        "qty": "Hoeveelheid",
+        "retry": "Probeer opnieuw",
+        "scanning": "Scannen",
+        "switch_camera": "Wissel camera",
+        "title": "Ar Scanner",
+        "unsupported": "AR scannen wordt niet ondersteund in deze browser"
+    },
     "tags": {
         "no_results": "Geen tags gevonden",
         "tag_delete_confirm": "Bent u zeker dat u deze tag wil verwijderen? Deze actie kan niet ongedaan gemaakt worden.",
@@ -843,17 +958,17 @@
             "ensure_import_refs": "Zorg voor Import Refs",
             "ensure_import_refs_button": "Zorg voor Import Refs",
             "ensure_import_refs_sub": "Zorgt ervoor dat alle artikelen in je voorraad een geldig import_ref veld hebben. Dit gebeurt door een random 8 karakter string voor elk item te maken die geen import_ref veld heeft.",
-            "set_primary_photo": "Hoofdfoto instellen",
-            "set_primary_photo_button": "Hoofdfoto instellen",
-            "set_primary_photo_confirm": "Weet u zeker dat u primaire foto's wilt instellen? Dit kan even duren en kan niet ongedaan worden gemaakt.",
-            "set_primary_photo_sub": "In versie v0.10.0 van Homebox is het primaire afbeeldingsveld toegevoegd aan bijlagen van het type foto. Deze actie zet de primaire afbeelding naar de eerste afbeelding in de database, indien deze nog niet ingesteld is. '<a class=\"link\" href=\"https://github.com/hay-kot/homebox/pull/576\">'Zie GitHub PR #576'</a>'",
+            "set_primary_photo": "Primaire afbeelding instellen",
+            "set_primary_photo_button": "Primaire afbeelding instellen",
+            "set_primary_photo_confirm": "Weet u zeker dat u primaire afbeeldingen wilt instellen? Dit kan even duren en kan niet ongedaan worden gemaakt.",
+            "set_primary_photo_sub": "In versie v0.10.0 van Homebox is het primaire afbeeldingsveld toegevoegd aan bijlagen van het type afbeelding. Deze actie zet de primaire afbeelding naar de eerste afbeelding in de database, indien deze nog niet ingesteld is. '<a class=\"link\" href=\"https://github.com/hay-kot/homebox/pull/576\">'Zie GitHub PR #576'</a>'",
             "wipe_inventory": "Inventaris wissen",
             "wipe_inventory_button": "Inventaris wissen",
             "wipe_inventory_confirm": "Weet je zeker dat je je volledige inventaris wilt wissen? Hiermee worden alle items verwijderd, dit kan niet ongedaan worden gemaakt.",
             "wipe_inventory_locations": "Ook alle locaties wissen",
             "wipe_inventory_maintenance": "Ook alle onderhoudsdossiers wissen",
             "wipe_inventory_note": "Opmerking: alleen groepseigenaren kunnen deze actie uitvoeren.",
-            "wipe_inventory_sub": "Verwijdert permanent alle items in je inventaris. Deze actie kan niet ongedaan gemaakt worden en verwijdert alle itemgegevens, inclusief bijlagen en foto's.",
+            "wipe_inventory_sub": "Verwijdert permanent alle items in je inventaris. Deze actie kan niet ongedaan gemaakt worden en verwijdert alle itemgegevens, inclusief bijlagen en afbeeldingen.",
             "wipe_inventory_tags": "Ook alle tags wissen",
             "zero_datetimes": "Nul item Datum Tijden",
             "zero_datetimes_button": "Nul item Datum Tijden",
@@ -861,6 +976,26 @@
             "zero_datetimes_sub": "Hiermee stelt u de tijdwaarde voor alle datum-/tijdvelden in uw voorraad in op het begin van de datum. Dit is een oplossing voor een fout in de applicatie geïntroduceerd in het begin van de ontwikkeling waarbij de tijd waarde verkeerd werd opgeslagen. '<a class=\"link\" href=\"https://github.com/hay-kot/homebox/issues/236\" target=\"_blank\">'Zie Github Issue #236 voor alle details.'</a>'"
         },
         "actions_sub": "Acties in bulk toepassen op je inventaris. Deze zijn onomkeerbaar '<b>'Wees voorzichtig.'</b>'",
+        "backups": "Back-up & herstel",
+        "backups_set": {
+            "create": "Back-up maken",
+            "create_button": "Start back-up",
+            "create_sub": "Maakt een zip-bestand aan met alle entiteiten, tags, aangepaste velden, bijlagen en onderhoudsrecords in deze collectie. De taak wordt op de achtergrond uitgevoerd, het bestand verschijnt in de onderstaande tabel zodra het klaar is.",
+            "delete_confirm": "Dit back-upbestand verwijderen? Dit kan niet ongedaan gemaakt worden.",
+            "download": "Download",
+            "failed": "Back-up mislukt. Check server logs voor details.",
+            "list_empty": "Nog geen back-ups.",
+            "restore": "Herstel van back-up",
+            "restore_button": "Uploaden en herstellen",
+            "restore_sub": "Upload een back-up-zipbestand om deze collectie te vullen. De collectie mag nog geen items bevatten, standaardlocaties en -tags worden automatisch verwijderd tijdens het herstelproces.",
+            "table": {
+                "actions": "Acties",
+                "created": "Aangemaakt",
+                "size": "Grootte",
+                "status": "Status"
+            }
+        },
+        "backups_sub": "Exporteer uw volledige collectie — entiteiten, tags, bijlagen en metagegevens — naar een verplaatsbaar zip-archief. Herstel een archief in een pas aangemaakte, lege collectie op deze of een andere server.",
         "demo_mode_error": {
             "wipe_inventory": "Inventaris, tags, locaties en onderhoudsrecords kunnen niet worden gewist terwijl Homebox zich in de demomodus bevindt. Zorg ervoor dat u niet in de demomodus bent en probeer het opnieuw."
         },
@@ -887,12 +1022,18 @@
         "reports_sub": "Genereer verschillende rapporten van je voorraad.",
         "toast": {
             "asset_success": "{ results } items zijn bijgewerkt.",
+            "backup_delete_failed": "Back-up verwijderen mislukt.",
+            "backup_start_failed": "Back-up starten mislukt.",
+            "backup_started": "De back-up is gestart — deze verschijnt in de tabel zodra hij klaar is.",
             "failed_create_missing_thumbnails": "Ontbrekende miniaturen aanmaken mislukt.",
             "failed_ensure_ids": "Item-ID's aanmaken mislukt.",
             "failed_ensure_import_refs": "Import refs aanmaken mislukt.",
-            "failed_set_primary_photos": "Primaire foto's instellen mislukt.",
+            "failed_set_primary_photos": "Primaire afbeeldingen instellen mislukt.",
             "failed_wipe_inventory": "Inventaris wissen mislukt.",
             "failed_zero_datetimes": "Datum- en tijdwaarden resetten mislukt.",
+            "restore_failed": "Herstel mislukt.",
+            "restore_requires_empty": "Voor het herstellen is een collectie zonder items vereist. Schakel over naar een nieuw geregistreerde collectie (standaardlocaties en -tags zijn prima) en probeer het opnieuw.",
+            "restore_started": "Herstel gestart — vernieuw de pagina binnenkort om de geïmporteerde items te bekijken.",
             "wipe_inventory_success": "Inventaris succesvol gewist. { results } items verwijderd."
         }
     }

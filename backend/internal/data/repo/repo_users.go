@@ -2,18 +2,31 @@ package repo
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/group"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/user"
+	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/usergroup"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type UserRepository struct {
 	db *ent.Client
+}
+
+// normalizeEmail canonicalizes an email address for storage and lookup. Emails are
+// treated case-insensitively throughout the app (login uses a case-folding lookup),
+// but the database UNIQUE constraint on users.email is case-sensitive. Storing a
+// lowercased, trimmed form makes that constraint reject case-variant duplicates —
+// without it an attacker could register USER@EXAMPLE.COM against an existing
+// user@example.com, after which the case-insensitive login lookup matches >1 row
+// and denies both accounts access.
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }
 
 type (
@@ -26,7 +39,9 @@ type (
 		Password       *string   `json:"password"`
 		IsSuperuser    bool      `json:"isSuperUser"`
 		DefaultGroupID uuid.UUID `json:"defaultGroupID"`
-		IsOwner        bool      `json:"isOwner"`
+		// IsOwner controls the role on the membership row created for
+		// (user, DefaultGroupID). It does not grant any cross-group privilege.
+		IsOwner bool `json:"isOwner"`
 	}
 
 	UserUpdate struct {
@@ -42,16 +57,14 @@ type (
 		DefaultGroupID uuid.UUID   `json:"defaultGroupId"`
 		GroupIDs       []uuid.UUID `json:"groupIds"`
 		PasswordHash   string      `json:"-"`
-		IsOwner        bool        `json:"isOwner"`
 		OidcIssuer     *string     `json:"oidcIssuer"`
 		OidcSubject    *string     `json:"oidcSubject"`
 	}
 
 	UserSummary struct {
-		Name    string    `json:"name"`
-		Email   string    `json:"email"`
-		IsOwner bool      `json:"isOwner"`
-		ID      uuid.UUID `json:"id"`
+		Name  string    `json:"name"`
+		Email string    `json:"email"`
+		ID    uuid.UUID `json:"id"`
 	}
 )
 
@@ -72,7 +85,6 @@ func mapUserOut(user *ent.User) UserOut {
 			return g.ID
 		}),
 		PasswordHash: lo.FromPtrOr(user.Password, ""),
-		IsOwner:      user.Role == "owner",
 		OidcIssuer:   user.OidcIssuer,
 		OidcSubject:  user.OidcSubject,
 	}
@@ -80,10 +92,9 @@ func mapUserOut(user *ent.User) UserOut {
 
 func mapUserSummary(user *ent.User) UserSummary {
 	return UserSummary{
-		Name:    user.Name,
-		Email:   user.Email,
-		IsOwner: user.Role == "owner",
-		ID:      user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		ID:    user.ID,
 	}
 }
 
@@ -93,7 +104,6 @@ func userSpanAttrs(out UserOut) []attribute.KeyValue {
 		attribute.String("user.default_group_id", out.DefaultGroupID.String()),
 		attribute.Int("user.groups.count", len(out.GroupIDs)),
 		attribute.Bool("user.is_superuser", out.IsSuperuser),
-		attribute.Bool("user.is_owner", out.IsOwner),
 		attribute.Bool("user.has_password_hash", out.PasswordHash != ""),
 		attribute.Bool("user.has_oidc", out.OidcIssuer != nil && out.OidcSubject != nil),
 	}
@@ -122,7 +132,7 @@ func (r *UserRepository) GetOneEmail(ctx context.Context, email string) (UserOut
 	defer span.End()
 
 	out, err := mapUserOutErr(r.db.User.Query().
-		Where(user.EmailEqualFold(email)).
+		Where(user.EmailEqualFold(normalizeEmail(email))).
 		WithGroups().
 		Only(ctx),
 	)
@@ -150,7 +160,7 @@ func (r *UserRepository) GetOneEmailNoEdges(ctx context.Context, email string) (
 	defer span.End()
 
 	out, err := mapUserOutErr(r.db.User.Query().
-		Where(user.EmailEqualFold(email)).
+		Where(user.EmailEqualFold(normalizeEmail(email))).
 		Only(ctx),
 	)
 	if err != nil {
@@ -181,6 +191,62 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]UserOut, error) {
 	return out, nil
 }
 
+// membershipRole returns the per-membership role to assign for a UserCreate.
+func membershipRole(isOwner bool) usergroup.Role {
+	if isOwner {
+		return usergroup.RoleOwner
+	}
+	return usergroup.RoleUser
+}
+
+// createUserWithMembership inserts the user row and the (user, default_group)
+// membership in a single transaction so the user always has exactly one
+// membership row when Create returns.
+func (r *UserRepository) createUserWithMembership(
+	ctx context.Context,
+	usr UserCreate,
+	configure func(*ent.UserCreate) *ent.UserCreate,
+) (uuid.UUID, error) {
+	tx, err := r.db.Tx(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	q := tx.User.
+		Create().
+		SetName(usr.Name).
+		SetEmail(normalizeEmail(usr.Email)).
+		SetIsSuperuser(usr.IsSuperuser).
+		SetDefaultGroupID(usr.DefaultGroupID)
+
+	if usr.Password != nil {
+		q = q.SetPassword(*usr.Password)
+	}
+	if configure != nil {
+		q = configure(q)
+	}
+
+	entUser, err := q.Save(ctx)
+	if err != nil {
+		_ = tx.Rollback()
+		return uuid.Nil, err
+	}
+
+	if _, err := tx.UserGroup.Create().
+		SetUserID(entUser.ID).
+		SetGroupID(usr.DefaultGroupID).
+		SetRole(membershipRole(usr.IsOwner)).
+		Save(ctx); err != nil {
+		_ = tx.Rollback()
+		return uuid.Nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return uuid.Nil, err
+	}
+	return entUser.ID, nil
+}
+
 func (r *UserRepository) Create(ctx context.Context, usr UserCreate) (UserOut, error) {
 	ctx, span := entityTracer().Start(ctx, "repo.UserRepository.Create",
 		trace.WithAttributes(
@@ -191,34 +257,14 @@ func (r *UserRepository) Create(ctx context.Context, usr UserCreate) (UserOut, e
 		))
 	defer span.End()
 
-	role := user.RoleUser
-	if usr.IsOwner {
-		role = user.RoleOwner
-	}
-
-	createQuery := r.db.User.
-		Create().
-		SetName(usr.Name).
-		SetEmail(usr.Email).
-		SetIsSuperuser(usr.IsSuperuser).
-		SetDefaultGroupID(usr.DefaultGroupID).
-		SetRole(role).
-		AddGroupIDs(usr.DefaultGroupID)
-
-	// Only set password if provided (non-nil)
-	if usr.Password != nil {
-		createQuery = createQuery.SetPassword(*usr.Password)
-	}
-
-	entUser, err := createQuery.Save(ctx)
+	id, err := r.createUserWithMembership(ctx, usr, nil)
 	if err != nil {
 		recordSpanError(span, err)
 		return UserOut{}, err
 	}
+	span.SetAttributes(attribute.String("user.id", id.String()))
 
-	span.SetAttributes(attribute.String("user.id", entUser.ID.String()))
-
-	out, err := r.GetOneID(ctx, entUser.ID)
+	out, err := r.GetOneID(ctx, id)
 	if err != nil {
 		recordSpanError(span, err)
 	}
@@ -237,35 +283,16 @@ func (r *UserRepository) CreateWithOIDC(ctx context.Context, usr UserCreate, iss
 		))
 	defer span.End()
 
-	role := user.RoleUser
-	if usr.IsOwner {
-		role = user.RoleOwner
-	}
-
-	createQuery := r.db.User.
-		Create().
-		SetName(usr.Name).
-		SetEmail(usr.Email).
-		SetIsSuperuser(usr.IsSuperuser).
-		SetDefaultGroupID(usr.DefaultGroupID).
-		SetRole(role).
-		SetOidcIssuer(issuer).
-		SetOidcSubject(subject).
-		AddGroupIDs(usr.DefaultGroupID)
-
-	if usr.Password != nil {
-		createQuery = createQuery.SetPassword(*usr.Password)
-	}
-
-	entUser, err := createQuery.Save(ctx)
+	id, err := r.createUserWithMembership(ctx, usr, func(uc *ent.UserCreate) *ent.UserCreate {
+		return uc.SetOidcIssuer(issuer).SetOidcSubject(subject)
+	})
 	if err != nil {
 		recordSpanError(span, err)
 		return UserOut{}, err
 	}
+	span.SetAttributes(attribute.String("user.id", id.String()))
 
-	span.SetAttributes(attribute.String("user.id", entUser.ID.String()))
-
-	out, err := r.GetOneID(ctx, entUser.ID)
+	out, err := r.GetOneID(ctx, id)
 	if err != nil {
 		recordSpanError(span, err)
 	}
@@ -280,7 +307,7 @@ func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, data UserUpda
 	q := r.db.User.Update().
 		Where(user.ID(id)).
 		SetName(data.Name).
-		SetEmail(data.Email)
+		SetEmail(normalizeEmail(data.Email))
 
 	_, err := q.Save(ctx)
 	recordSpanError(span, err)

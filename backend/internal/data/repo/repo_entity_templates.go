@@ -42,60 +42,52 @@ type (
 	}
 
 	EntityTemplateCreate struct {
-		Name        string `json:"name"        validate:"required,min=1,max=255"`
-		Description string `json:"description" validate:"max=1000"`
-		Notes       string `json:"notes"       validate:"max=1000"`
-
 		// Default values for entities
-		DefaultQuantity         *float64 `json:"defaultQuantity,omitempty"        extensions:"x-nullable"`
-		DefaultInsured          bool     `json:"defaultInsured"`
-		DefaultName             *string  `json:"defaultName,omitempty"            validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultDescription      *string  `json:"defaultDescription,omitempty"     validate:"omitempty,max=1000" extensions:"x-nullable"`
-		DefaultManufacturer     *string  `json:"defaultManufacturer,omitempty"    validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultModelNumber      *string  `json:"defaultModelNumber,omitempty"     validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultLifetimeWarranty bool     `json:"defaultLifetimeWarranty"`
-		DefaultWarrantyDetails  *string  `json:"defaultWarrantyDetails,omitempty" validate:"omitempty,max=1000" extensions:"x-nullable"`
-
+		DefaultQuantity        *float64     `json:"defaultQuantity,omitempty"        extensions:"x-nullable"`
+		DefaultName            *string      `json:"defaultName,omitempty"            validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultDescription     *string      `json:"defaultDescription,omitempty"     validate:"omitempty,max=1000"     extensions:"x-nullable"`
+		DefaultManufacturer    *string      `json:"defaultManufacturer,omitempty"    validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultModelNumber     *string      `json:"defaultModelNumber,omitempty"     validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultWarrantyDetails *string      `json:"defaultWarrantyDetails,omitempty" validate:"omitempty,max=1000"     extensions:"x-nullable"`
+		DefaultTagIDs          *[]uuid.UUID `json:"defaultTagIds,omitempty"          extensions:"x-nullable"`
+		Name                   string       `json:"name"                             validate:"required,min=1,max=255"`
+		Description            string       `json:"description"                      validate:"max=1000"`
+		Notes                  string       `json:"notes"                            validate:"max=1000"`
+		// Custom fields
+		Fields []TemplateField `json:"fields"`
 		// Default location and tags
-		DefaultLocationID uuid.UUID    `json:"defaultLocationId,omitempty" extensions:"x-nullable"`
-		DefaultTagIDs     *[]uuid.UUID `json:"defaultTagIds,omitempty"     extensions:"x-nullable"`
-
+		DefaultLocationID       uuid.UUID `json:"defaultLocationId,omitempty" extensions:"x-nullable"`
+		DefaultInsured          bool      `json:"defaultInsured"`
+		DefaultLifetimeWarranty bool      `json:"defaultLifetimeWarranty"`
 		// Metadata flags
 		IncludeWarrantyFields bool `json:"includeWarrantyFields"`
 		IncludePurchaseFields bool `json:"includePurchaseFields"`
 		IncludeSoldFields     bool `json:"includeSoldFields"`
-
-		// Custom fields
-		Fields []TemplateField `json:"fields"`
 	}
 
 	EntityTemplateUpdate struct {
-		ID          uuid.UUID `json:"id"`
-		Name        string    `json:"name"        validate:"required,min=1,max=255"`
-		Description string    `json:"description" validate:"max=1000"`
-		Notes       string    `json:"notes"       validate:"max=1000"`
-
 		// Default values for entities
-		DefaultQuantity         *float64 `json:"defaultQuantity,omitempty"        extensions:"x-nullable"`
-		DefaultInsured          bool     `json:"defaultInsured"`
-		DefaultName             *string  `json:"defaultName,omitempty"            validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultDescription      *string  `json:"defaultDescription,omitempty"     validate:"omitempty,max=1000" extensions:"x-nullable"`
-		DefaultManufacturer     *string  `json:"defaultManufacturer,omitempty"    validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultModelNumber      *string  `json:"defaultModelNumber,omitempty"     validate:"omitempty,max=255"  extensions:"x-nullable"`
-		DefaultLifetimeWarranty bool     `json:"defaultLifetimeWarranty"`
-		DefaultWarrantyDetails  *string  `json:"defaultWarrantyDetails,omitempty" validate:"omitempty,max=1000" extensions:"x-nullable"`
-
+		DefaultQuantity        *float64     `json:"defaultQuantity,omitempty"        extensions:"x-nullable"`
+		DefaultName            *string      `json:"defaultName,omitempty"            validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultDescription     *string      `json:"defaultDescription,omitempty"     validate:"omitempty,max=1000"     extensions:"x-nullable"`
+		DefaultManufacturer    *string      `json:"defaultManufacturer,omitempty"    validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultModelNumber     *string      `json:"defaultModelNumber,omitempty"     validate:"omitempty,max=255"      extensions:"x-nullable"`
+		DefaultWarrantyDetails *string      `json:"defaultWarrantyDetails,omitempty" validate:"omitempty,max=1000"     extensions:"x-nullable"`
+		DefaultTagIDs          *[]uuid.UUID `json:"defaultTagIds,omitempty"          extensions:"x-nullable"`
+		Name                   string       `json:"name"                             validate:"required,min=1,max=255"`
+		Description            string       `json:"description"                      validate:"max=1000"`
+		Notes                  string       `json:"notes"                            validate:"max=1000"`
+		// Custom fields
+		Fields []TemplateField `json:"fields"`
+		ID     uuid.UUID       `json:"id"`
 		// Default location and tags
-		DefaultLocationID uuid.UUID    `json:"defaultLocationId,omitempty" extensions:"x-nullable"`
-		DefaultTagIDs     *[]uuid.UUID `json:"defaultTagIds,omitempty"     extensions:"x-nullable"`
-
+		DefaultLocationID       uuid.UUID `json:"defaultLocationId,omitempty" extensions:"x-nullable"`
+		DefaultInsured          bool      `json:"defaultInsured"`
+		DefaultLifetimeWarranty bool      `json:"defaultLifetimeWarranty"`
 		// Metadata flags
 		IncludeWarrantyFields bool `json:"includeWarrantyFields"`
 		IncludePurchaseFields bool `json:"includePurchaseFields"`
 		IncludeSoldFields     bool `json:"includeSoldFields"`
-
-		// Custom fields
-		Fields []TemplateField `json:"fields"`
 	}
 
 	EntityTemplateSummary struct {
@@ -107,34 +99,30 @@ type (
 	}
 
 	EntityTemplateOut struct {
-		ID          uuid.UUID `json:"id"`
-		Name        string    `json:"name"`
-		Description string    `json:"description"`
-		Notes       string    `json:"notes"`
-		CreatedAt   time.Time `json:"createdAt"`
-		UpdatedAt   time.Time `json:"updatedAt"`
-
-		// Default values for entities
-		DefaultQuantity         float64 `json:"defaultQuantity"`
-		DefaultInsured          bool    `json:"defaultInsured"`
-		DefaultName             string  `json:"defaultName"`
-		DefaultDescription      string  `json:"defaultDescription"`
-		DefaultManufacturer     string  `json:"defaultManufacturer"`
-		DefaultModelNumber      string  `json:"defaultModelNumber"`
-		DefaultLifetimeWarranty bool    `json:"defaultLifetimeWarranty"`
-		DefaultWarrantyDetails  string  `json:"defaultWarrantyDetails"`
-
+		CreatedAt time.Time `json:"createdAt"`
+		UpdatedAt time.Time `json:"updatedAt"`
 		// Default location and tags
-		DefaultLocation *TemplateLocationSummary `json:"defaultLocation"`
-		DefaultTags     []TemplateTagSummary     `json:"defaultTags"`
-
+		DefaultLocation        *TemplateLocationSummary `json:"defaultLocation"`
+		Name                   string                   `json:"name"`
+		Description            string                   `json:"description"`
+		Notes                  string                   `json:"notes"`
+		DefaultName            string                   `json:"defaultName"`
+		DefaultDescription     string                   `json:"defaultDescription"`
+		DefaultManufacturer    string                   `json:"defaultManufacturer"`
+		DefaultModelNumber     string                   `json:"defaultModelNumber"`
+		DefaultWarrantyDetails string                   `json:"defaultWarrantyDetails"`
+		DefaultTags            []TemplateTagSummary     `json:"defaultTags"`
+		// Custom fields
+		Fields []TemplateField `json:"fields"`
+		// Default values for entities
+		DefaultQuantity         float64   `json:"defaultQuantity"`
+		ID                      uuid.UUID `json:"id"`
+		DefaultInsured          bool      `json:"defaultInsured"`
+		DefaultLifetimeWarranty bool      `json:"defaultLifetimeWarranty"`
 		// Metadata flags
 		IncludeWarrantyFields bool `json:"includeWarrantyFields"`
 		IncludePurchaseFields bool `json:"includePurchaseFields"`
 		IncludeSoldFields     bool `json:"includeSoldFields"`
-
-		// Custom fields
-		Fields []TemplateField `json:"fields"`
 	}
 )
 
@@ -265,6 +253,10 @@ func (r *EntityTemplatesRepository) GetOne(ctx context.Context, gid uuid.UUID, i
 
 // Create creates a new template
 func (r *EntityTemplatesRepository) Create(ctx context.Context, gid uuid.UUID, data EntityTemplateCreate) (EntityTemplateOut, error) {
+	if err := assertEntityInGroup(ctx, r.db.Entity, gid, data.DefaultLocationID); err != nil {
+		return EntityTemplateOut{}, err
+	}
+
 	q := r.db.EntityTemplate.Create().
 		SetName(data.Name).
 		SetDescription(data.Description).
@@ -315,6 +307,10 @@ func (r *EntityTemplatesRepository) Create(ctx context.Context, gid uuid.UUID, d
 
 // Update updates an existing template
 func (r *EntityTemplatesRepository) Update(ctx context.Context, gid uuid.UUID, data EntityTemplateUpdate) (EntityTemplateOut, error) {
+	if err := assertEntityInGroup(ctx, r.db.Entity, gid, data.DefaultLocationID); err != nil {
+		return EntityTemplateOut{}, err
+	}
+
 	// Verify template belongs to group
 	template, err := r.db.EntityTemplate.Query().
 		Where(

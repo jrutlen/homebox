@@ -56,7 +56,6 @@
   });
 
   const route = useRoute();
-  const router = useRouter();
   const api = useUserApi();
 
   const itemId = computed<string>(() => route.params.id as string);
@@ -620,14 +619,12 @@
   }
 
   async function createSubitem() {
-    // setting URL Parameter that is read and immidiately removed in the Item-CreateModal
-    await router.push({
-      query: {
-        subItemCreate: "y",
+    openDialog(DialogID.CreateEntity, {
+      params: {
+        baseType: "item",
+        subItem: true,
       },
     });
-
-    openDialog(DialogID.CreateItem);
   }
 
   // Matches location names of the form: one letter followed by 1-2 digits (e.g. A1, B12, Z9)
@@ -849,10 +846,7 @@
             <template #title> {{ $t("items.photos") }} </template>
             <div class="scroll-bg container mx-auto flex max-h-[500px] flex-wrap gap-2 overflow-y-scroll border-t p-4">
               <button v-for="(img, i) in photos" :key="i" @click="openImageDialog(img, item.id)">
-                <picture>
-                  <source :srcset="img.originalSrc" :type="img.originalType" />
-                  <img class="max-h-[200px] rounded" :src="img.thumbnailSrc" alt="attachment image" />
-                </picture>
+                <img class="max-h-[200px] rounded" :src="img.thumbnailSrc" :alt="$t('items.photo')" loading="lazy" />
               </button>
             </div>
           </BaseCard>

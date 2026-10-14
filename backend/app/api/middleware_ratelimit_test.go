@@ -1,16 +1,24 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/hay-kot/httpkit/errchain"
 	"github.com/sysadminsmedia/homebox/backend/internal/sys/config"
+	"github.com/sysadminsmedia/homebox/backend/internal/sys/validate"
 )
 
-const proxyRemoteAddr = "10.0.0.1:1234"
+const (
+	proxyRemoteAddr     = "10.0.0.1:1234"
+	caseDirectConn      = "DirectConnection"
+	caseProxyXRealIP    = "ProxyXRealIP"
+	testClientIPAddress = "192.168.1.1"
+)
 
 func TestSimpleRateLimiter(t *testing.T) {
 	type testCase struct {
@@ -21,12 +29,12 @@ func TestSimpleRateLimiter(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:       "DirectConnection",
+			name:       caseDirectConn,
 			trustProxy: false,
 			setupReq:   func(r *http.Request, ip string) { r.RemoteAddr = ip + ":1234" },
 		},
 		{
-			name:       "ProxyXRealIP",
+			name:       caseProxyXRealIP,
 			trustProxy: true,
 			setupReq: func(r *http.Request, ip string) {
 				r.RemoteAddr = proxyRemoteAddr // Proxy IP
@@ -48,7 +56,7 @@ func TestSimpleRateLimiter(t *testing.T) {
 			// Create a rate limiter that allows 3 requests per 10 seconds
 			limiter := newSimpleRateLimiter(3, 10*time.Second, tc.trustProxy)
 			t.Cleanup(func() { limiter.Stop() })
-			clientIP := "192.168.1.1"
+			clientIP := testClientIPAddress
 
 			// Helper to get IP
 			getIP := func(ip string) string {
@@ -96,12 +104,12 @@ func TestSimpleRateLimiterRefill(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:       "DirectConnection",
+			name:       caseDirectConn,
 			trustProxy: false,
 			setupReq:   func(r *http.Request, ip string) { r.RemoteAddr = ip + ":1234" },
 		},
 		{
-			name:       "ProxyXRealIP",
+			name:       caseProxyXRealIP,
 			trustProxy: true,
 			setupReq: func(r *http.Request, ip string) {
 				r.RemoteAddr = proxyRemoteAddr // Proxy IP
@@ -115,7 +123,7 @@ func TestSimpleRateLimiterRefill(t *testing.T) {
 			// Create a rate limiter that allows 2 requests per 100ms
 			limiter := newSimpleRateLimiter(2, 100*time.Millisecond, tc.trustProxy)
 			t.Cleanup(func() { limiter.Stop() })
-			clientIP := "192.168.1.1"
+			clientIP := testClientIPAddress
 
 			// Helper to get IP
 			getIP := func(ip string) string {
@@ -157,12 +165,12 @@ func TestSimpleRateLimiterConcurrent(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:       "DirectConnection",
+			name:       caseDirectConn,
 			trustProxy: false,
 			setupReq:   func(r *http.Request, ip string) { r.RemoteAddr = ip + ":1234" },
 		},
 		{
-			name:       "ProxyXRealIP",
+			name:       caseProxyXRealIP,
 			trustProxy: true,
 			setupReq: func(r *http.Request, ip string) {
 				r.RemoteAddr = proxyRemoteAddr // Proxy IP
@@ -175,7 +183,7 @@ func TestSimpleRateLimiterConcurrent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			limiter := newSimpleRateLimiter(10, time.Second, tc.trustProxy)
 			t.Cleanup(func() { limiter.Stop() })
-			clientIP := "192.168.1.1"
+			clientIP := testClientIPAddress
 
 			// Helper to get IP
 			getIP := func(ip string) string {
@@ -222,12 +230,12 @@ func TestSimpleRateLimiterCleanup(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:       "DirectConnection",
+			name:       caseDirectConn,
 			trustProxy: false,
 			setupReq:   func(r *http.Request, ip string) { r.RemoteAddr = ip + ":1234" },
 		},
 		{
-			name:       "ProxyXRealIP",
+			name:       caseProxyXRealIP,
 			trustProxy: true,
 			setupReq: func(r *http.Request, ip string) {
 				r.RemoteAddr = proxyRemoteAddr // Proxy IP
@@ -291,12 +299,12 @@ func TestSimpleRateLimiterCleanupPreservesActive(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:       "DirectConnection",
+			name:       caseDirectConn,
 			trustProxy: false,
 			setupReq:   func(r *http.Request, ip string) { r.RemoteAddr = ip + ":1234" },
 		},
 		{
-			name:       "ProxyXRealIP",
+			name:       caseProxyXRealIP,
 			trustProxy: true,
 			setupReq: func(r *http.Request, ip string) {
 				r.RemoteAddr = proxyRemoteAddr // Proxy IP
@@ -465,4 +473,63 @@ func TestAuthRateLimiterStop(t *testing.T) {
 
 	// Verify the cleanup goroutine exits (this test passes if no panic occurs)
 	time.Sleep(10 * time.Millisecond)
+}
+
+func TestRegisterRateLimitCountsSuccesses(t *testing.T) {
+	newApp := func(enabled bool) *app {
+		a := &app{
+			conf:            &config.Config{Auth: config.AuthConfig{RateLimit: config.AuthRateLimit{Enabled: enabled}}},
+			registerLimiter: newSimpleRateLimiter(5, time.Minute, false),
+		}
+		t.Cleanup(a.registerLimiter.Stop)
+		return a
+	}
+
+	var calls atomic.Int32
+	ok := errchain.HandlerFunc(func(http.ResponseWriter, *http.Request) error {
+		calls.Add(1)
+		return nil
+	})
+
+	serve := func(h errchain.Handler, ip string) error {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", nil)
+		req.RemoteAddr = ip + ":1234"
+		return h.ServeHTTP(httptest.NewRecorder(), req)
+	}
+
+	t.Run("Enabled", func(t *testing.T) {
+		calls.Store(0)
+		h := newApp(true).mwRegisterRateLimit(ok)
+
+		// Every attempt succeeds, yet the 6th must still be throttled.
+		for i := 0; i < 5; i++ {
+			if err := serve(h, testClientIPAddress); err != nil {
+				t.Fatalf("request %d should be allowed: %v", i+1, err)
+			}
+		}
+
+		err := serve(h, testClientIPAddress)
+		var reqErr *validate.RequestError
+		if !errors.As(err, &reqErr) || reqErr.Status != http.StatusTooManyRequests {
+			t.Fatalf("6th request should be rejected with 429, got %v", err)
+		}
+		if got := calls.Load(); got != 5 {
+			t.Fatalf("handler should run 5 times, ran %d", got)
+		}
+
+		if err := serve(h, "192.168.1.2"); err != nil {
+			t.Fatalf("different client should be allowed: %v", err)
+		}
+	})
+
+	t.Run("DisabledByConfig", func(t *testing.T) {
+		calls.Store(0)
+		h := newApp(false).mwRegisterRateLimit(ok)
+
+		for i := 0; i < 10; i++ {
+			if err := serve(h, testClientIPAddress); err != nil {
+				t.Fatalf("request %d should be allowed when rate limiting is disabled: %v", i+1, err)
+			}
+		}
+	})
 }

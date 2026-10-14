@@ -19,12 +19,15 @@ import type { Requests } from "~~/lib/requests";
 
 export type ItemsQuery = {
   orderBy?: string;
+  orderDirection?: string;
   includeArchived?: boolean;
   page?: number;
   pageSize?: number;
   parentIds?: string[];
+  entityTypeIds?: string[];
   tags?: string[];
   negateTags?: boolean;
+  matchAllTags?: boolean;
   onlyWithoutPhoto?: boolean;
   onlyWithPhoto?: boolean;
   q?: string;
@@ -65,6 +68,16 @@ export class AttachmentsAPI extends BaseAPI {
     return this.http.put<ItemAttachmentUpdate, EntityOut>({
       url: route(`/entities/${id}/attachments/${attachmentId}`),
       body: data,
+    });
+  }
+
+  addExternalLink(id: string, sourceType: string, externalId: string, title: string, attachmentType?: string) {
+    return this.http.post<
+      { source_type: string; external_id: string; title: string; attachment_type?: string },
+      EntityOut
+    >({
+      url: route(`/entities/${id}/attachments/external`),
+      body: { source_type: sourceType, external_id: externalId, title, attachment_type: attachmentType },
     });
   }
 }
@@ -193,6 +206,7 @@ export class ItemsApi extends BaseAPI {
     return {
       ...resp,
       data: resp.data?.items ?? [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as { data: EntitySummary[]; error: any; status: number };
   }
 

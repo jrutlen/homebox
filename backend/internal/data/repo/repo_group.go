@@ -18,6 +18,7 @@ import (
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/notifier"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/tag"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/user"
+	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/usergroup"
 )
 
 type GroupRepository struct {
@@ -27,7 +28,7 @@ type GroupRepository struct {
 	attachments      *AttachmentRepo
 }
 
-func NewGroupRepository(db *ent.Client) *GroupRepository {
+func NewGroupRepository(db *ent.Client, attachments *AttachmentRepo) *GroupRepository {
 	gmap := func(g *ent.Group) Group {
 		return Group{
 			ID:        g.ID,
@@ -51,6 +52,7 @@ func NewGroupRepository(db *ent.Client) *GroupRepository {
 		db:               db,
 		groupMapper:      gmap,
 		invitationMapper: imap,
+		attachments:      attachments,
 	}
 }
 
@@ -278,14 +280,36 @@ func (r *GroupRepository) StatsGroup(ctx context.Context, gid uuid.UUID) (GroupS
 }
 
 func (r *GroupRepository) GroupCreate(ctx context.Context, name string, userID uuid.UUID) (Group, error) {
-	createQuery := r.db.Group.Create().SetName(name)
-
-	// Only link user if a valid user ID is provided
-	if userID != uuid.Nil {
-		createQuery = createQuery.AddUserIDs(userID)
+	if userID == uuid.Nil {
+		return r.groupMapper.MapErr(r.db.Group.Create().SetName(name).Save(ctx))
 	}
 
-	return r.groupMapper.MapErr(createQuery.Save(ctx))
+	tx, err := r.db.Tx(ctx)
+	if err != nil {
+		return Group{}, err
+	}
+
+	g, err := tx.Group.Create().SetName(name).Save(ctx)
+	if err != nil {
+		_ = tx.Rollback()
+		return Group{}, err
+	}
+
+	// The user creating a group is its owner. This is the only place a fresh
+	// owner membership comes from outside registration.
+	if _, err := tx.UserGroup.Create().
+		SetUserID(userID).
+		SetGroupID(g.ID).
+		SetRole(usergroup.RoleOwner).
+		Save(ctx); err != nil {
+		_ = tx.Rollback()
+		return Group{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return Group{}, err
+	}
+	return r.groupMapper.Map(g), nil
 }
 
 func (r *GroupRepository) GroupUpdate(ctx context.Context, id uuid.UUID, data GroupUpdate) (Group, error) {
@@ -309,19 +333,25 @@ func (r *GroupRepository) GroupDelete(ctx context.Context, id uuid.UUID) error {
 
 	itm, err := tx.Entity.Query().
 		Where(entity.HasGroupWith(group.ID(id))).
-		WithGroup().
 		WithAttachments().
 		All(ctx)
 	if err != nil {
+		if rerr := tx.Rollback(); rerr != nil {
+			log.Error().Err(rerr).Msg("failed to rollback transaction")
+		}
 		return err
 	}
 
-	// Delete all attachments (and their files) before deleting the entities
+	// Keep attachment row operations on the same transaction.
+	attachments := *r.attachments
+	attachments.db = tx.Client()
+
+	// Delete all attachments (and their files) before deleting the entities.
 	for _, it := range itm {
 		for _, att := range it.Edges.Attachments {
-			if err := r.attachments.Delete(ctx, id, att.ID); err != nil {
-				log.Err(err).Str("attachment_id", att.ID.String()).Msg("failed to delete attachment during entity deletion")
-				// Continue with other attachments even if one fails
+			if err := attachments.Delete(ctx, id, att.ID); err != nil {
+				log.Err(err).Str("attachment_id", att.ID.String()).Msg("failed to delete attachment during group deletion")
+				// Continue with other attachments even if one fails.
 			}
 		}
 	}
@@ -429,8 +459,17 @@ func (r *GroupRepository) IsMember(ctx context.Context, groupID, userID uuid.UUI
 		Exist(ctx)
 }
 
-func (r *GroupRepository) AddMember(ctx context.Context, groupID, userID uuid.UUID) error {
-	return r.db.Group.UpdateOneID(groupID).AddUserIDs(userID).Exec(ctx)
+// IsOwnerOf reports whether userID has role=owner on groupID. This is the
+// authoritative per-group ownership check and the only one authorization
+// code should consult — there is intentionally no global owner flag.
+func (r *GroupRepository) IsOwnerOf(ctx context.Context, userID, groupID uuid.UUID) (bool, error) {
+	return r.db.UserGroup.Query().
+		Where(
+			usergroup.UserID(userID),
+			usergroup.GroupID(groupID),
+			usergroup.RoleEQ(usergroup.RoleOwner),
+		).
+		Exist(ctx)
 }
 
 func (r *GroupRepository) RemoveMember(ctx context.Context, groupID, userID uuid.UUID) error {
@@ -452,6 +491,12 @@ func (r *GroupRepository) InvitationDecrement(ctx context.Context, id uuid.UUID)
 		return fmt.Errorf("invitation used up")
 	}
 	return nil
+}
+
+// InvitationRefund returns a use claimed with InvitationDecrement, for when the
+// registration it was reserved for fails afterwards.
+func (r *GroupRepository) InvitationRefund(ctx context.Context, id uuid.UUID) error {
+	return r.db.GroupInvitationToken.UpdateOneID(id).AddUses(1).Exec(ctx)
 }
 
 func (r *GroupRepository) InvitationAccept(ctx context.Context, token []byte, userID uuid.UUID) (Group, error) {
@@ -503,9 +548,12 @@ func (r *GroupRepository) InvitationAccept(ctx context.Context, token []byte, us
 		return Group{}, fmt.Errorf("user already a member of this group")
 	}
 
-	// 4. Add member
-	err = tx.Group.UpdateOneID(invitation.Edges.Group.ID).AddUserIDs(userID).Exec(ctx)
-	if err != nil {
+	// 4. Add member with role=user; ownership is reserved for whoever created the group.
+	if _, err := tx.UserGroup.Create().
+		SetUserID(userID).
+		SetGroupID(invitation.Edges.Group.ID).
+		SetRole(usergroup.RoleUser).
+		Save(ctx); err != nil {
 		if err := tx.Rollback(); err != nil {
 			log.Warn().Err(err).Msg("failed to rollback transaction")
 		}

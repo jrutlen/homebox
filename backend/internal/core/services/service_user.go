@@ -13,18 +13,35 @@ import (
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/authroles"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/repo"
 	"github.com/sysadminsmedia/homebox/backend/pkgs/hasher"
+	"github.com/sysadminsmedia/homebox/backend/pkgs/mailer"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	oneWeek           = time.Hour * 24 * 7
-	ErrorInvalidLogin = errors.New("invalid username or password")
-	ErrorInvalidToken = errors.New("invalid token")
+	oneWeek = time.Hour * 24 * 7
+	// defaultAPIKeyTTL bounds the lifetime of an API key created without an
+	// explicit expiry. A password change revokes sessions but deliberately
+	// leaves API keys alone (matching how API credentials behave elsewhere),
+	// so without a default TTL a leaked key would stay valid for the life of
+	// the account. Callers that need a longer-lived key pass ExpiresAt.
+	defaultAPIKeyTTL          = time.Hour * 24 * 30
+	passwordResetTokenTTL     = time.Hour
+	ErrorInvalidLogin         = errors.New("invalid username or password")
+	ErrorInvalidToken         = errors.New("invalid token")
+	ErrorMailerNotConfigured  = errors.New("password reset by email is unavailable: SMTP is not configured")
+	ErrorPasswordResetInvalid = errors.New("password reset link is invalid or has expired")
+	ErrorPasswordTooShort     = fmt.Errorf("password must be at least %d characters", PasswordMinLength)
 )
 
+// PasswordMinLength is the minimum length enforced server-side for any flow
+// that sets a user password (registration, reset, change). Matches the value
+// already documented by the password reset handler's OpenAPI spec.
+const PasswordMinLength = 6
+
 type UserService struct {
-	repos *repo.AllRepos
+	repos  *repo.AllRepos
+	mailer *mailer.Mailer
 }
 
 type (
@@ -45,9 +62,28 @@ type (
 	}
 )
 
+// RegisterOption customizes RegisterUser behavior.
+type RegisterOption func(*registerOptions)
+
+type registerOptions struct {
+	skipPasswordValidation bool
+}
+
+// SkipPasswordValidation bypasses the PasswordMinLength floor for this
+// registration. Reserved for demo seeding, where the operator-supplied
+// HBOX_DEMO_PASSWORD must be accepted as-is regardless of length.
+func SkipPasswordValidation() RegisterOption {
+	return func(o *registerOptions) { o.skipPasswordValidation = true }
+}
+
 // RegisterUser creates a new user and group in the data with the provided data. It also bootstraps the user's group
 // with default Tags and Locations.
-func (svc *UserService) RegisterUser(ctx context.Context, data UserRegistration) (repo.UserOut, error) {
+func (svc *UserService) RegisterUser(ctx context.Context, data UserRegistration, opts ...RegisterOption) (repo.UserOut, error) {
+	options := registerOptions{}
+	for _, o := range opts {
+		o(&options)
+	}
+
 	ctx, span := entityServiceTracer().Start(ctx, "service.UserService.RegisterUser",
 		trace.WithAttributes(
 			attribute.Int("user.name.length", len(data.Name)),
@@ -57,10 +93,20 @@ func (svc *UserService) RegisterUser(ctx context.Context, data UserRegistration)
 		))
 	defer span.End()
 
+	// Reject too-short (and empty) passwords before any DB work. The reset and
+	// change-password flows enforce the same floor; registration was the gap.
+	if !options.skipPasswordValidation && len(data.Password) < PasswordMinLength {
+		span.SetAttributes(attribute.String("registration.outcome", "password_too_short"))
+		return repo.UserOut{}, ErrorPasswordTooShort
+	}
+
+	// Don't log the raw invitation token — it's a single-use credential that
+	// grants group membership and is replayable from log aggregators until it
+	// expires. The boolean is enough for diagnostics.
 	log.Debug().
 		Str("name", data.Name).
 		Str("email", data.Email).
-		Str("groupToken", data.GroupToken).
+		Bool("hasGroupToken", data.GroupToken != "").
 		Msg("Registering new user")
 
 	var (
@@ -144,9 +190,32 @@ func (svc *UserService) RegisterUser(ctx context.Context, data UserRegistration)
 		IsOwner:        creatingGroup,
 	}
 
+	// Claim an invitation use before the user and membership are committed. The
+	// guarded decrement is atomic, so concurrent registrations racing on the same
+	// token can't all pass the Uses check above and oversubscribe it; losers fail
+	// here without creating anything. The use is handed back if creation fails.
+	if token.ID != uuid.Nil {
+		decCtx, decSpan := entityServiceTracer().Start(ctx, "service.UserService.RegisterUser.decrementInvitation")
+		log.Debug().Msg("decrementing invitation token")
+		err = svc.repos.Groups.InvitationDecrement(decCtx, token.ID)
+		if err != nil {
+			recordServiceSpanError(decSpan, err)
+			decSpan.End()
+			recordServiceSpanError(span, err)
+			log.Err(err).Msg("Failed to update invitation token")
+			return repo.UserOut{}, err
+		}
+		decSpan.End()
+	}
+
 	usr, err := svc.repos.Users.Create(ctx, usrCreate)
 	if err != nil {
 		recordServiceSpanError(span, err)
+		if token.ID != uuid.Nil {
+			if refundErr := svc.repos.Groups.InvitationRefund(context.WithoutCancel(ctx), token.ID); refundErr != nil {
+				log.Err(refundErr).Msg("Failed to refund invitation token use")
+			}
+		}
 		return repo.UserOut{}, err
 	}
 	span.SetAttributes(attribute.String("user.id", usr.ID.String()))
@@ -180,26 +249,22 @@ func (svc *UserService) RegisterUser(ctx context.Context, data UserRegistration)
 			}
 			locsCreated++
 		}
+
+		// Seeding locations lazily creates the "Location" entity type, but the
+		// "Item" type isn't created until the first item — leaving the new group
+		// unable to create items via the UI. Ensure both exist up front.
+		if err := ensureDefaultEntityTypes(bootstrapCtx, svc.repos, usr.DefaultGroupID); err != nil {
+			recordServiceSpanError(bootstrapSpan, err)
+			bootstrapSpan.End()
+			recordServiceSpanError(span, err)
+			return repo.UserOut{}, err
+		}
+
 		bootstrapSpan.SetAttributes(
 			attribute.Int("tags.created.count", tagsCreated),
 			attribute.Int("locations.created.count", locsCreated),
 		)
 		bootstrapSpan.End()
-	}
-
-	// Decrement the invitation token if it was used.
-	if token.ID != uuid.Nil {
-		decCtx, decSpan := entityServiceTracer().Start(ctx, "service.UserService.RegisterUser.decrementInvitation")
-		log.Debug().Msg("decrementing invitation token")
-		err = svc.repos.Groups.InvitationDecrement(decCtx, token.ID)
-		if err != nil {
-			recordServiceSpanError(decSpan, err)
-			decSpan.End()
-			recordServiceSpanError(span, err)
-			log.Err(err).Msg("Failed to update invitation token")
-			return repo.UserOut{}, err
-		}
-		decSpan.End()
 	}
 
 	return usr, nil
@@ -322,10 +387,12 @@ func (svc *UserService) Login(ctx context.Context, username, password string, ex
 			attribute.Bool("user.found", false),
 			attribute.String("login.outcome", "user_not_found"),
 		)
-		// SECURITY: Perform hash to ensure response times are the same
+		// Run a real argon2id comparison against a valid dummy hash so response
+		// timing matches the "user found" path. Without this the absence of hashing
+		// work would reveal that the account does not exist.
 		_, dummySpan := entityServiceTracer().Start(ctx, "service.UserService.Login.timingDummy",
 			trace.WithAttributes(attribute.String("reason", "user_not_found")))
-		hasher.CheckPasswordHashCtx(ctx, "not-a-real-password", "not-a-real-password")
+		hasher.CheckDummyPasswordHashCtx(ctx)
 		dummySpan.End()
 		return UserAuthTokenDetail{}, ErrorInvalidLogin
 	}
@@ -342,7 +409,7 @@ func (svc *UserService) Login(ctx context.Context, username, password string, ex
 		span.SetAttributes(attribute.String("login.outcome", "blocked_no_password_hash"))
 		_, dummySpan := entityServiceTracer().Start(ctx, "service.UserService.Login.timingDummy",
 			trace.WithAttributes(attribute.String("reason", "no_password_hash")))
-		hasher.CheckPasswordHashCtx(ctx, "not-a-real-password", "not-a-real-password")
+		hasher.CheckDummyPasswordHashCtx(ctx)
 		dummySpan.End()
 		return UserAuthTokenDetail{}, ErrorInvalidLogin
 	}
@@ -534,6 +601,17 @@ func (svc *UserService) registerOIDCUser(ctx context.Context, issuer, subject, e
 		}
 		locsCreated++
 	}
+
+	// Ensure both default entity types exist (see RegisterUser): seeding
+	// locations only creates the "Location" type, not "Item".
+	if err := ensureDefaultEntityTypes(bootstrapCtx, svc.repos, group.ID); err != nil {
+		recordServiceSpanError(bootstrapSpan, err)
+		bootstrapSpan.End()
+		recordServiceSpanError(span, err)
+		log.Err(err).Msg("Failed to ensure default entity types")
+		return repo.UserOut{}, err
+	}
+
 	bootstrapSpan.SetAttributes(
 		attribute.Int("tags.created.count", tagsCreated),
 		attribute.Int("locations.created.count", locsCreated),
@@ -552,6 +630,28 @@ func (svc *UserService) Logout(ctx context.Context, token string) error {
 	err := svc.repos.AuthTokens.DeleteToken(ctx, hash)
 	recordServiceSpanError(span, err)
 	return err
+}
+
+// LogoutAll revokes every session token for the user, signing them out on all
+// devices including the one making the request. It gives a user a way to
+// unilaterally invalidate sessions they no longer trust — e.g. after a token is
+// leaked or a device is lost — without waiting for the token TTL to elapse.
+//
+// API keys are deliberate long-lived credentials stored in a separate table and
+// are intentionally left untouched; they are managed from the API keys page.
+// Returns the number of session tokens revoked.
+func (svc *UserService) LogoutAll(ctx context.Context, userID uuid.UUID) (int, error) {
+	ctx, span := entityServiceTracer().Start(ctx, "service.UserService.LogoutAll",
+		trace.WithAttributes(attribute.String("user.id", userID.String())))
+	defer span.End()
+
+	revoked, err := svc.repos.AuthTokens.DeleteAllByUser(ctx, userID)
+	if err != nil {
+		recordServiceSpanError(span, err)
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int("logout_all.sessions_revoked", revoked))
+	return revoked, nil
 }
 
 func (svc *UserService) RenewToken(ctx context.Context, token string) (UserAuthTokenDetail, error) {
@@ -580,8 +680,20 @@ func (svc *UserService) RenewToken(ctx context.Context, token string) (UserAuthT
 	out, err := svc.createSessionToken(ctx, dbToken.ID, false)
 	if err != nil {
 		recordServiceSpanError(span, err)
+		return out, err
 	}
-	return out, err
+
+	// Invalidate the just-rotated token so a leaked refresh request can't
+	// continue to authenticate alongside the freshly issued one. Done after
+	// createSessionToken succeeds — order matters: if the delete ran first and
+	// the new-token issuance failed, the caller would be logged out instead of
+	// just missing a refresh. Delete failures are non-fatal: the new token is
+	// already valid, and the old hash will expire on its own.
+	if delErr := svc.repos.AuthTokens.DeleteToken(ctx, hash); delErr != nil {
+		recordServiceSpanError(span, delErr)
+		log.Warn().Err(delErr).Msg("RenewToken: failed to delete prior session token")
+	}
+	return out, nil
 }
 
 // DeleteSelf deletes the user that is currently logged based of the provided UUID
@@ -637,6 +749,29 @@ func (svc *UserService) ChangePassword(ctx Context, current string, new string) 
 		log.Err(err).Msg("Failed to change password")
 		return false
 	}
+
+	// Revoke every other session for this user. The current request's token
+	// is preserved so the caller stays logged in; every other device, browser,
+	// or stolen cookie is invalidated atomically with the password change.
+	// If the request was authed via API key (no session token in context),
+	// fall back to a full revoke — there's nothing to preserve.
+	currentRaw := UseTokenCtx(ctx.Context)
+	var revokeErr error
+	var revoked int
+	if currentRaw != "" {
+		revoked, revokeErr = svc.repos.AuthTokens.DeleteAllByUserExceptToken(ctx.Context, ctx.UID, hasher.HashToken(currentRaw))
+	} else {
+		revoked, revokeErr = svc.repos.AuthTokens.DeleteAllByUser(ctx.Context, ctx.UID)
+	}
+	if revokeErr != nil {
+		// The password is already changed — surface the partial-success state
+		// in telemetry but still return success to the caller. The caller's
+		// password is updated; other sessions will expire on their own.
+		recordServiceSpanError(span, revokeErr)
+		span.SetAttributes(attribute.String("change_password.outcome", "revoke_failed"))
+		log.Warn().Err(revokeErr).Msg("password changed but failed to revoke other sessions")
+	}
+	span.SetAttributes(attribute.Int("change_password.sessions_revoked", revoked))
 
 	span.SetAttributes(attribute.String("change_password.outcome", "success"))
 	return true
@@ -711,6 +846,74 @@ func (svc *UserService) EnsureUserPassword(ctx context.Context, email, password 
 	}
 	span.SetAttributes(attribute.String("ensure.outcome", "noop_match"))
 	return nil
+}
+
+// ============================================================================
+// User API Keys
+
+// CreateAPIKey generates a new static API key for the user. The raw token is
+// returned exactly once and must be displayed to the user immediately — only
+// the hash is persisted.
+func (svc *UserService) CreateAPIKey(ctx context.Context, userID uuid.UUID, in repo.APIKeyCreate) (repo.APIKeyCreatedOut, error) {
+	ctx, span := entityServiceTracer().Start(ctx, "service.UserService.CreateAPIKey",
+		trace.WithAttributes(
+			attribute.String("user.id", userID.String()),
+			attribute.Int("api_key.name.length", len(in.Name)),
+			attribute.Bool("api_key.has_expiration", in.ExpiresAt != nil),
+		))
+	defer span.End()
+
+	expiresAt := in.ExpiresAt
+	if expiresAt == nil {
+		defaulted := time.Now().Add(defaultAPIKeyTTL)
+		expiresAt = &defaulted
+	}
+	span.SetAttributes(
+		attribute.Bool("api_key.expiration.defaulted", in.ExpiresAt == nil),
+		attribute.String("api_key.expires_at", expiresAt.Format(time.RFC3339)),
+	)
+
+	token := hasher.GenerateAPIKeyCtx(ctx)
+	out, err := svc.repos.APIKeys.Create(ctx, userID, in.Name, token.Hash, expiresAt)
+	if err != nil {
+		recordServiceSpanError(span, err)
+		return repo.APIKeyCreatedOut{}, err
+	}
+
+	span.SetAttributes(attribute.String("api_key.id", out.ID.String()))
+	return repo.APIKeyCreatedOut{
+		APIKeyOut: out,
+		Token:     token.Raw,
+	}, nil
+}
+
+func (svc *UserService) ListAPIKeys(ctx context.Context, userID uuid.UUID) ([]repo.APIKeyOut, error) {
+	ctx, span := entityServiceTracer().Start(ctx, "service.UserService.ListAPIKeys",
+		trace.WithAttributes(attribute.String("user.id", userID.String())))
+	defer span.End()
+
+	out, err := svc.repos.APIKeys.GetByUser(ctx, userID)
+	if err != nil {
+		recordServiceSpanError(span, err)
+		return nil, err
+	}
+	span.SetAttributes(attribute.Int("api_keys.count", len(out)))
+	return out, nil
+}
+
+func (svc *UserService) DeleteAPIKey(ctx context.Context, userID, id uuid.UUID) error {
+	ctx, span := entityServiceTracer().Start(ctx, "service.UserService.DeleteAPIKey",
+		trace.WithAttributes(
+			attribute.String("user.id", userID.String()),
+			attribute.String("api_key.id", id.String()),
+		))
+	defer span.End()
+
+	err := svc.repos.APIKeys.Delete(ctx, userID, id)
+	if err != nil && !ent.IsNotFound(err) {
+		recordServiceSpanError(span, err)
+	}
+	return err
 }
 
 // ExistsByEmail returns true if a user with the given email exists.
