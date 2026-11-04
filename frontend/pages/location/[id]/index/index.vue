@@ -286,6 +286,7 @@
                 :id="location.id"
                 type="location"
                 :entity-data="location"
+                @photo-added="location.attachments = $event.attachments"
               />
               <Button class="w-9 md:w-auto" @click="openCreateItem">
                 <MdiPlus name="mdi-plus" />

@@ -252,6 +252,9 @@
                     "print_success": "Label printed"
                 }
             },
+            "page_photo_capture": {
+                "take_photo": "Take Photo"
+            },
             "page_qr_code": {
                 "page_url": "Page URL",
                 "qr_tooltip": "Show QR Code"

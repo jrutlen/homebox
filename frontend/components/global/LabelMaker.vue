@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useI18n } from "vue-i18n";
   import { type QueryValue, route } from "../../lib/api/base/urls";
-  import PageQRCode from "./PageQRCode.vue";
+  import PagePhotoCapture from "./PagePhotoCapture.vue";
   import { DialogID } from "@/components/ui/dialog-provider/utils";
   import { toast } from "@/components/ui/sonner";
   import MdiLoading from "~icons/mdi/loading";
@@ -29,6 +29,10 @@
     type: string;
     id: string;
     entityData?: EntityOut;
+  }>();
+
+  defineEmits<{
+    photoAdded: [entity: EntityOut];
   }>();
 
   const pubApi = usePublicApi();
@@ -187,7 +191,7 @@
           </TooltipContent>
         </Tooltip>
 
-        <PageQRCode />
+        <PagePhotoCapture v-if="entityData" :entity-id="entityData.id" @uploaded="$emit('photoAdded', $event)" />
       </ButtonGroup>
     </TooltipProvider>
   </div>

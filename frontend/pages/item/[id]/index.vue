@@ -735,8 +735,15 @@
                 :id="item.assetId"
                 type="asset"
                 :entity-data="item"
+                @photo-added="item.attachments = $event.attachments"
               />
-              <LabelMaker v-else :id="item.id" type="item" :entity-data="item" />
+              <LabelMaker
+                v-else
+                :id="item.id"
+                type="item"
+                :entity-data="item"
+                @photo-added="item.attachments = $event.attachments"
+              />
               <Button class="w-9 md:w-auto" :aria-label="$t('global.create_subitem')" @click="createSubitem">
                 <MdiPlus />
                 <span class="hidden md:inline">{{ $t("global.create_subitem") }}</span>
