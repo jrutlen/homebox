@@ -30,23 +30,30 @@
     }
 
     uploading.value = true;
-    const { data, error, status } = await api.items.attachments.add(
-      props.entityId,
-      file,
-      file.name,
-      AttachmentTypes.Photo
-    );
-    uploading.value = false;
-    // Clear the input so the next capture always fires a change event
-    input.value = "";
+    try {
+      const { data, error, status } = await api.items.attachments.add(
+        props.entityId,
+        file,
+        file.name,
+        AttachmentTypes.Photo
+      );
 
-    if (error) {
-      toast.error(status === 413 ? t("items.toast.attachment_too_large") : t("items.toast.failed_upload_attachment"));
-      return;
+      if (error) {
+        toast.error(status === 413 ? t("items.toast.attachment_too_large") : t("items.toast.failed_upload_attachment"));
+        return;
+      }
+
+      toast.success(t("items.toast.attachment_uploaded"));
+      emit("uploaded", data);
+    } catch (err) {
+      // fetch rejects on network-level failures rather than returning an error response
+      console.error("[PagePhotoCapture] Failed to upload photo:", err);
+      toast.error(t("items.toast.failed_upload_attachment"));
+    } finally {
+      uploading.value = false;
+      // Clear the input so the next capture always fires a change event
+      input.value = "";
     }
-
-    toast.success(t("items.toast.attachment_uploaded"));
-    emit("uploaded", data);
   }
 </script>
 
